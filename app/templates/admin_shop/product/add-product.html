@@ -1,0 +1,366 @@
+{% extends 'admin_shop/base.html' %}
+
+{% block content %}
+<div class="content">
+    <h4 class="my-4">Thêm sản phẩm</h4>
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+    {% if messages %}
+        <div class="alert alert-success">
+            {{ messages }}
+        </div>
+    {% endif %}
+    <div class="content-body mb-5">
+        <form action="/add_product" method="post" id="myForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="product-name" class="form-label fw-bold">Tên sản phẩm <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="name" id="product-name" placeholder="Tên sản phẩm ...">
+            </div>
+
+            <div class="mb-3">
+                <label for="product-description" class="form-label fw-bold">Mô tả sản phẩm<span class="text-danger">*</span></label>
+                <textarea class="form-control" name='description' id="description" rows="5" placeholder="Mô tả sản phẩm ..."></textarea>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <label for="" class="form-label m-0 fw-bold">Danh mục sản phẩm<span class="text-danger">*</span></label>
+                </div>
+                <select class="form-select" name="category" id="">
+                    {% for category in product_form.category.field.queryset %}
+                    <option value="{{ category.category_id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="product-author" class="form-label fw-bold">Tên tác giả<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="author" id="product-author" placeholder="Tên tác giả ...">
+            </div>
+            <div class="mb-3">
+                <label for="product-publisher" class="form-label fw-bold">Tên NXB<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="publisher" id="product-publisher" placeholder="Tên NXB ...">
+            </div>
+            <div class="mb-3">
+                <label for="product-translator" class="form-label fw-bold">Người dịch<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="translator" id="product-translator" placeholder="Tên người dịch ...">
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label for="price" class="form-label fw-bold">Giá thường (vnđ)<span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="price" id="price" >
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label for="" class="form-label fw-bold">Giá giảm (vnđ)<span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="sale" id="" >
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label for="product-page" class="form-label fw-bold">Số trang<span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="page" id="product-page" placeholder="">
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label for="product-age" class="form-label fw-bold">Độ tuổi<span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="age" id="product-age" >
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="mb-3">
+                        <label for="product-size" class="form-label fw-bold">Kích thước bao bì (cm)<span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="size" id="product-size" placeholder="dài x rộng x cao" >
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="mb-3">
+                        <label for="product-weight" class="form-label fw-bold">Trọng lượng (gr)<span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="weight" id="product-weight" >
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="mb-3">
+                        <label for="product-year" class="form-label fw-bold">Năm xuất bản<span class="text-danger">*</span></label>
+                        <!-- <input type="text" class="form-control" name="year_of_publish" id="yearPicker"> -->
+                        <select class="form-control" name="year_of_publish">
+                            {% for year in years %}
+                                <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="product-variant my-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="me-3 fw-bold">Các phiên bản sản phẩm</div>
+                        <div class="add-variant">
+                            <div class="d-flex align-items-center gap-1 color-blue">
+                                <i class="fa-solid fa-plus"></i>
+                                <p class="m-0">Thêm</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="product-variant-item row my-3 align-items-center">
+                        <div class="col-11">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="mb-3">
+                                        <label for="" class="form-label fw-bold">Loại sách<span class="text-danger">*</span></label>
+                                        <select class="form-select" name="type" id="type">
+                                                <option value="0">Sách mới</option>
+                                                <option value="1">Sách cũ</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="mb-3">
+                                        <label for="" class="form-label fw-bold">Số lượng<span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" name="quantity" id="quantity" >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="" class="form-label fw-bold">Ảnh sản phẩm<span class="text-danger">*</span></label>
+                                <input type="file" class="form-control" name="name" id="name" placeholder="Chọn ảnh sản phẩm" multiple>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-3">
+                    <button type="button" class="btn btn-min-width btn-back">Quay lại</button>
+                    <button class="btn btn-primary">Thêm sản phẩm</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        $('.btn-back').on('click', function() {
+            window.location.href = "{% url 'products' %}";
+        });
+        
+        $("#yearPicker").flatpickr({
+            plugins: [
+                new monthSelectPlugin({
+                    shorthand: true,
+                    dateFormat: "Y",
+                    altFormat: "Y"
+                })
+            ],
+            onReady: function() {
+                $('.flatpickr-innerContainer').css({
+                    'display': 'none',
+                });
+                $('.flatpickr-months').css({
+                    'padding': '4px',
+                    'border': '1px solid #000',
+                    'border-radius': '8px',
+                });
+            }
+        });
+
+        $.validator.addMethod("greaterThan", function(value, element, params) {
+            var price = parseFloat($(params).val());
+            var sale = parseFloat(value);
+            return this.optional(element) || sale < price;
+        }, "Giá giảm phải nhỏ hơn giá thường");
+
+        $("#myForm").validate({
+            rules: {
+                name: {
+                    required: true,
+                    minlength: 3,
+                    maxlength: 100,
+                },
+                description: {required: true, maxlength: 5000},
+                category: {required: true},
+                author: {required: true, maxlength: 100},
+                publisher: {required: true, maxlength: 100},
+                translator: {required: true, maxlength: 100},
+                price: {required: true, number: true, min:0.0},
+                sale: {required: true, number: true, min:0.0, greaterThan: "#price"},
+                page: {required: true, number: true, min:0},
+                age: {required: true, number: true, min:0, max: 100},
+                size: {required: true},
+                weight: {required: true, number: true, min:0.0},
+                year_of_publish: {required: true},
+                type: {required: true},
+                quantity: {required: true, number: true, min:0},
+                product_images: {required: true},
+            },
+            messages: {
+                name: {
+                    required: "Tên sản phẩm không được để trống",
+                    minlength: "Tên sản phẩm tối thiểu phải từ 3 ký tự trở nên",
+                    maxlength: "Tên sản phẩm tối đa 100 ký tự"
+                },
+                description: {required: "Mô tả không được để trống", maxlength: "Mô tả tối đa 5000 ký tự"},
+                category: {required: "Danh mục không được để trống"},
+                author: {required: "Tên tác giả không được để trống", maxlength: "Tên tác giả tối đa 100 ký tự"},
+                publisher: {required: "Tên NXB không được để trống", maxlength: "Tên NXB tối đa 100 ký tự"},
+                translator: {required: "Người dịch không được để trống", maxlength: "Người dịch tối đa 100 ký tự"},
+                price: {required: "Giá thường không được để trống", number: "Giá phải là số", min: "Giá phải lớn hơn 0"},
+                sale: {required: "Giá giảm không được để trống", number: "Giá phải là số", min: "Giá phải lớn hơn 0"},
+                page: {required: "Số trang không được để trống", number: "Số trang phải là số", min: "Số trang phải lớn hơn 0"},
+                age: {required: "Độ tuổi không được để trống", number: "Độ tuổi phải là số", min: "Độ tuổi phải lớn hơn 0", max: "Độ tuổi phải nhỏ hơn 100"},
+                size: {required: "Kích thước không được để trống"},
+                weight: {required: "Trọng lượng không được để trống", number: "Trọng lượng phải là số", min: "Trọng lượng phải lớn hơn 0"},
+                year_of_publish: {required: "Năm xuất bản không được để trống"},
+                type: {required: "Loại sách không được để trống"},
+                quantity: {required: "Số lượng không được để trống", number: "Số lượng phải là số", min: "Số lượng phải lớn hơn 0"},
+                product_images: {required: "Ảnh sản phẩm không được để trống"},
+            },
+            errorPlacement: function(error, element) {
+                error.appendTo(element.parent());
+            },
+            submitHandler: function(form) {
+                form.submit();
+            }
+        });
+
+        $('.add-variant').on('click', function() {
+            var newProductVariant = `
+                            <div class="product-variant-item row my-3 align-items-center">
+                                <div class="col-11">
+                                    <div class="row">
+                                        <div class="col">
+                                            <div class="mb-3">
+                                                <label for="" class="form-label fw-bold">Loại sách<span class="text-danger">*</span></label>
+                                                 <select class="form-select" name="type">
+                                                    <option value="0">Sách mới</option>
+                                                    <option value="1">Sách cũ</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="mb-3">
+                                                <label for="" class="form-label fw-bold">Số lượng<span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" name="quantity">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-1 d-flex align-items-center gap-2 mt-3">
+                                    <div class="delete-variant">
+                                        <i class="fa-solid fa-delete-left"></i>
+                                        Xóa
+                                    </div>
+                                </div>
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label for="" class="form-label fw-bold">Ảnh sản phẩm<span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control" name="product_images"
+                                           id=""
+                                           placeholder="Chọn ảnh sản phẩm" multiple>
+                                </div>
+                            </div>
+                            </div>`;
+            $('.product-variant').append(newProductVariant);
+            $('.delete-variant').on('click', function() {
+                $(this).parent().parent().remove();
+            });
+        });
+        $('.delete-variant').on('click', function() {
+            $(this).parent().parent().remove();
+        });
+
+        // Khi chọn tệp ảnh từ dialog
+        $('#image-input').change(function() {
+            readURL(this);
+            addFiles(this.files);
+        });
+
+        // Khi kéo và thả ảnh vào drop zone
+        $('.image-drop-zone').on('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).addClass('dragover');
+        });
+
+        $('.image-drop-zone').on('dragleave', function(e) {
+            $(this).removeClass('dragover');
+        });
+
+        $('.image-drop-zone').on('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).removeClass('dragover');
+            var files = e.originalEvent.dataTransfer.files;
+            if (files.length > 0) {
+                var file = files[0];
+                if (file.type.match(/image.*/)) {
+                    readURL(file);
+                    addFiles(file);
+                } else {
+                    alert('Vui lòng chọn tệp hình ảnh.');
+                }
+            }
+        });
+
+        var imageUrlList = []
+
+        // Đọc tệp ảnh và hiển thị xem trước
+        function readURL(input) {
+            console.log(input);
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                imageUrlList.push(e.target.result);
+                console.log(imageUrlList);
+                $('.image-preview').append('<img src="' + e.target.result + '">');
+                $('.image-preview img').click(function() {
+                    $(this).remove();
+                    const imageUrl = $(this).prop('src');
+                    console.log(imageUrl);
+                    const imageIndex = imageUrlList.findIndex(file => file == imageUrl);
+                    imageUrlList.splice(imageIndex, 1);
+                    removeFile(imageIndex);
+                    console.log(imageUrlList);
+                })
+            }
+            reader.readAsDataURL(input);
+        }
+
+        // Thêm các tệp vào input để gửi form đi
+        function addFiles(file) {
+            var input = $('#image-input');
+            var existingFiles = input.prop('files');
+            // var newFiles = $.merge([], file);
+            var dataTransfer = new DataTransfer();
+            for (var i = 0; i < existingFiles.length; i++) {
+                dataTransfer.items.add(existingFiles[i]);
+            }
+            dataTransfer.items.add(file);
+            var fileList = dataTransfer.files;
+            input.prop('files', fileList);
+            console.log('success');
+        }
+
+        function removeFile(index) {
+            var input = $('#image-input');
+            var existingFiles = input.prop('files');
+            // var newFiles = $.merge([], file);
+            var dataTransfer = new DataTransfer();
+            for (var i = 0; i < existingFiles.length; i++) {
+                if (i != index) {
+                    dataTransfer.items.add(existingFiles[i]);
+                }
+            }
+            var fileList = dataTransfer.files;
+            input.prop('files', fileList);
+            console.log(fileList);
+        }
+
+
+    })
+</script>
+{% endblock content %}

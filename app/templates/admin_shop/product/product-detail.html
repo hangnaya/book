@@ -1,0 +1,232 @@
+{% extends 'admin_shop/base.html' %}
+{% load my_filters %}
+{% block content %}
+<div class="content">
+    <div class="my-4">
+        <h4 class='mb-4'>Thông tin sản phẩm </h4>
+        <div class="row">
+            <div class="col-8">
+                <div class="card p-4">
+                    <div class="fs-5"><span class="text-bold">Tên sản phẩm:</span> {{ product.name }}</div>
+                    <div class="d-flex gap-3 my-3">
+                        <div class="rating d-flex gap-1">
+                            <div class='rating'>
+                                {% for i in 5|times %}
+                                {% if i <= product.rating %}
+                                <i class="fa-solid fa-star"></i>
+                                {% else %}
+                                <i class="fa-regular fa-star"></i>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span>5.0</span>
+                        </div>
+                        <div class="total_sold">Đã bán: {{ product.total_sold }}</div>
+                    </div>
+                    <div class="d-flex gap-3 mt-3">
+                        <div class="price"><span class="text-bold">Giá:</span> {{ product.price|floatformat:0|intcomma_dot }} đ</div>
+                        {% if product.price != product.sale %}
+                            <div class="price color-red"><span class="text-bold">Giá khuyến mãi:</span>
+                                {{ product.sale|floatformat:0|intcomma_dot }} đ
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div><span class="text-bold">Tác giả:</span> {{ product.author }}</div>
+                    <div><span class="text-bold">Nhà xuất bản:</span> {{ product.publisher }}</div>
+                    <div><span class="text-bold">Người dịch:</span> {{ product.translator }}</div>
+                    <div><span class="text-bold">Số trang:</span> {{ product.page }} trang</div>
+                    <div><span class="text-bold">Độ tuổi:</span> {{ product.age }}+</div>
+                    <div><span class="text-bold">Năm xuất bản:</span> {{ product.year_of_publish }}</div>
+                    <div><span class="text-bold">Kích thước:</span> {{ product.size }} cm</div>
+                    <div><span class="text-bold">Trọng lượng:</span> {{ product.weight }} gr</div>
+                    <div class="d-flex gap-3 mt-3 row">
+                        <div class='mt-3 fs-5 text-bold'>Ảnh sản phẩm</div>
+                        {% for image in product.productimage_set.all %}
+                            <div class='col-2'>
+                                <img class='product-detail-image' src="{{ image.name.url }}" alt="" width="100">
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <div class="description fs-5 my-4 text-bold">Mô tả</div>
+                        <div class="container-text">
+                            <p class="text">{{ product.description }}</p>
+                            <button class="expanse-text btn btn-secondary">Xem thêm</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-4">
+                <div class="card">
+                    <div class="d-flex justify-content-center my-2 fs-5">Các loại sản phẩm</div>
+                    <div class="px-2">
+                        <table class="table p-4">
+                            <thead>
+                                <tr>
+                                    <th>Loại</th>
+                                    <th>Số lượng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for variant in product.productdetail_set.all %}
+                                <tr>
+                                    <td>{% if variant.type == 0 %} Mới {% else %} Cũ {% endif %}</td>
+                                    <td>{{ variant.quantity }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-info mt-2 btn-min-width btn-back">Quay lại</button>
+        <h5 class="my-4">Đánh giá sản phẩm</h5>
+        {% if feedbacks %}
+        <div class="product-rating__list card px-3">
+            {% for feedback in feedbacks %}
+
+            <div class="product-rating__item">
+                <div class="d-flex mt-4 w-100">
+                    <img class="user-image-rate" src="{{ feedback.customer.avatar.url }}" alt="">
+                    <div class="d-flex flex-column ms-3 flex-grow-1">
+                        <div class="">{{ feedback.customer.name }}</div>
+                        <div class="color-gray">{{ feedback.date|date:"H:i d/m/Y" }}</div>
+                        <div class="mt-1">
+                            {% for i in 5|times %}
+                            {% if i <= feedback.rating %}
+                            <i class="fa-solid fa-star"></i>
+                            {% else %}
+                            <i class="fa-regular fa-star"></i>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        {% if feedback.feedbackimage_set.all %}
+                        <div class=" image-feedback-list d-flex mt-3">
+                            {% for image in feedback.feedbackimage_set.all %}
+                            <div class="image-feedback-item">
+                                <img src="{{ image.name.url }}" alt="">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if feedback.comment %}
+                        <div class="mt-3">
+                            <span class='fw-bold me-2'>Bình luận: </span>
+                            {{ feedback.comment }}
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex align-items-center mt-3">
+                            <div class="btn active btn-like"> {{ feedback.like }} <i class="fa-solid fa-thumbs-up "></i></div>
+                            <div class="btn ms-2  btn-dislike">{{ feedback.dislike }} <i class="fa-solid fa-thumbs-down"></i></div>
+
+                        </div>
+                        {% if feedback.feedbackrespone_set.all %}
+                        <div class="response d-flex mt-3 align-items-start">
+                            <i class="fa-solid fa-reply fa-rotate-180"></i>
+                            <div class="ms-3">
+                                <h6 class="m-0">Phản hồi của người bán</h6>
+                                <div class="color-gray">{{feedback.feedbackrespone_set.first.date|date:'H:i d/m/Y'}}</div>
+                                <div class="mt-1">
+                                    {{ feedback.feedbackrespone_set.first.comment }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% else %}
+                        <div class="d-flex flex-column gap-3 mt-3">
+                            <div class='response-form' style='display: none'>
+                                <form id="respone-form" method="POST" action="/product-detail?product_id={{ product.product_id }}&feedback_id={{ feedback.feedback_id }}" name="feedback">
+                                    {% csrf_token %}
+
+                                    <div>
+                                        <label for="id_textfield" class="form-label fw-bold">Nhập phản hồi</label>
+                                        {{ response_form.textfield }}
+                                        <input type="hidden" name="feedback_id" value="{{ feedback.feedback_id }}">
+                                        <div class='d-flex gap-3 mt-2'>
+                                            <button type="submit" class="btn active btn-primary">Gửi phản hồi</button>
+                                            <div class="btn btn-secondary hide-response">
+                                                Đóng
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="btn active btn-primary show-response" style='width: 120px'>
+                                Phản hồi
+                                <i class="fa-solid fa-reply fa-rotate-180"></i>
+                            </div>
+
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="page-controller mt-3">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item {% if page_obj.number == 1 %}disabled{% endif %} ">
+                            <a class="page-link pre-page" href="/product-detail/{{ product.product_id }}?page=1" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% if page_obj.has_previous %}
+                        <li class="page-item" aria-current="page">
+                            <a class="page-link" href="/product-detail/{{ product.product_id }}?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a>
+                        </li>
+                        {% endif %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{ page_obj.number }}</a>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item" aria-current="page">
+                            <a class="page-link" href="/product-detail/{{ product.product_id }}?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a>
+                        </li>
+                        {% endif %}
+                        <li class="page-item">
+                            <a class="page-link next-page {% if page_obj.number == 1 %}disabled{% endif %}" href="/product-detail/{{ product.product_id }}?page={{ page_obj.paginator.num_pages }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class='alert alert-danger mt-3 d-flex justify-content-center'>
+            Chưa có đánh giá nào
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        $('.expanse-text').click(function() {
+            $('.text').toggleClass('show-text');
+            if ($('.text').hasClass('show-text')) {
+                $('.expanse-text').text('Thu gọn');
+            } else {
+                $('.expanse-text').text('Xem thêm');
+            }
+        })
+        $('.show-response').click(function() {
+            $('.response-form').show();
+            $(this).hide();
+        })
+        $('.hide-response').click(function() {
+            $('.response-form').hide();
+            $('.show-response').show();
+        })
+        $('.btn-back').on('click', function() {
+            window.location.href = "{% url 'products' %}";
+        });
+    })
+</script>
+{% endblock content %}

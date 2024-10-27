@@ -137,3 +137,268 @@ def home(request):
 
     return render(request, 'customer/home.html', context)
 
+
+
+
+@login_required(login_url='/login')
+def addProduct(request):
+    messages = '' 
+    error = ''
+    years = list(range(2025, 1899, -1))
+    product_form = ProductForm(request.POST or None)
+    product_sale_form = ProductSaleForm(request.POST or None)
+    types = request.POST.getlist('type')
+    quantities = request.POST.getlist('quantity')
+    product_image_form = ProductImageForm(request.POST, request.FILES)
+    if product_form.is_valid() and product_sale_form.is_valid() and product_image_form.is_valid():
+        product = product_form.save()
+        # product_sale = ProductSale(price=product_sale_form.cleaned_data['price'], product=product)
+        # product_sale.save()
+        for i in range(len(types)):
+            product_detail = ProductDetail(type=types[i], quantity=quantities[i], product=product)
+            product_detail.save()
+            images = request.FILES.getlist('name')
+            for image in images:
+                product_image = ProductImage(name=image, product=product)
+                product_image.save()
+        messages = "Thêm sản phẩm thành công"
+    else:
+        if request.method == 'POST':
+            error = 'Bạn cần nhập đầy đủ thông tin'
+        else:
+            error = ''
+    return render(request, 'admin_shop/product/add-product.html',
+                  {'product_form': product_form, 'product_sale_form': product_sale_form, 'years': years,
+                   'product_image_form': product_image_form, 'error': error, 'messages' : messages})
+
+@login_required(login_url='/login')
+def editProduct(request):
+    messages = '' 
+    error = ''
+    categories = Category.objects.all()
+    years = list(range(2025, 1899, -1))
+    if request.method == "POST":
+        print(request.FILES)
+        product_id = request.POST.get('product_id')
+
+        # Lấy sản phẩm để cập nhật
+        product = get_object_or_404(Product, product_id=product_id)
+        
+        # Khởi tạo form với dữ liệu POST
+        product_form = ProductForm(request.POST, instance=product)
+        product_sale_form = ProductSaleForm(request.POST)
+        types = request.POST.getlist('type')
+        quantities = request.POST.getlist('quantity')
+
+        # Kiểm tra nếu có file
+        if request.FILES:
+            product_image_form = ProductImageForm(request.POST, request.FILES)
+        else:
+            product_image_form = ProductImageForm(request.POST)  # Không có file
+
+        if product_form.is_valid() and product_sale_form.is_valid() and product_image_form.is_valid():
+            product = product_form.save()  # Cập nhật thông tin sản phẩm
+            # product_sale = ProductSale(price=product_sale_form.cleaned_data['price'], product=product)
+            # product_sale.save()
+
+            # Cập nhật chi tiết sản phẩm
+            ProductDetail.objects.filter(product=product).delete()
+            for i in range(len(types)):
+                product_detail = ProductDetail(type=types[i], quantity=quantities[i], product=product)
+                product_detail.save()
+
+            if request.FILES:
+                ProductImage.objects.filter(product=product).delete()
+            images = request.FILES.getlist('product_images')
+            for image in images:
+                product_image = ProductImage(name=image, product=product)
+                product_image.save()
+            imagesOld = request.FILES.getlist('product_images_old')
+            for image in imagesOld:
+                product_image = ProductImage(name=image, product=product)
+                product_image.save()
+
+            messages = "Cập nhật sản phẩm thành công"
+        else:
+            error = 'Bạn cần nhập đầy đủ thông tin'
+            print("Product Form Errors:", product_form.errors)
+            print("Product Sale Form Errors:", product_sale_form.errors)
+            print("Product Image Form Errors:", product_image_form.errors)
+    else:
+        product_id = int(request.GET.get('product_id'))
+    product_form = Product.objects.get(product_id=product_id)
+    product_detail = ProductDetail.objects.filter(product=product_form).all()
+    images = ProductImage.objects.filter(product_id=product_id).values('name')
+
+    return render(request, 'admin_shop/product/edit-product.html', {
+        'product_form': product_form,
+        'error': error,
+        'messages': messages,
+        'categories': categories,
+        'product_detail': product_detail,
+        'years': years
+    })
+
+@login_required(login_url='/login')
+def productManager(request):
+    categories = Category.objects.all()
+    if request.method == "POST":
+        keyword = request.POST.get('keyword', '')
+        products = Product.objects.filter(name__icontains=keyword).annotate(
+            total_quantity=Sum('productdetail__quantity')).order_by('-product_id')
+        category = request.POST.get('category')
+        status = request.POST.get('status')
+        if category:
+            products = products.filter(category__name=category)
+        if status:
+            if status == 'Còn hàng':
+                products = products.filter(total_quantity__gt=0)
+            else:
+                products = products.filter(total_quantity=0)
+    else:
+        keyword = request.GET.get('keyword', '')
+        products = Product.objects.filter(name__icontains=keyword).annotate(
+            total_quantity=Sum('productdetail__quantity')).order_by('-product_id')
+        category = request.GET.get('category')
+        status = request.GET.get('status')
+        if category:
+            products = products.filter(category__name=category)
+        if status:
+            if status == 'Còn hàng':
+                products = products.filter(total_quantity__gt=0)
+            else:
+                products = products.filter(total_quantity=0)
+    paginator = Paginator(products, 15)
+
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'admin_shop/product/products.html', {'page_obj': page_obj, 'categories': categories})
+
+
+@login_required(login_url='/login')
+def getProductDetailAdmin(request):
+    if request.method == "POST":
+        feedback_id = int(request.GET.get('feedback_id'))
+        response_form = ResponseForm(request.POST)
+        if response_form.is_valid():
+            text = response_form.cleaned_data.get("textfield")
+            response = FeedbackRespone(comment=text, feedback_id=feedback_id)
+            response.save()
+
+    product_id = int(request.GET.get('product_id'))
+    product = Product.objects.filter(pk=product_id).annotate(
+        # curr_price=Case(
+        #     When(productsale__start_date__lte=timezone.now(),
+        #          productsale__end_date__gte=timezone.now(),
+        #          then=F('productsale__price')),
+        #     default=F('price'),
+        #     output_field=FloatField()
+        # ),
+    ).first()
+
+    feedback = Feedback.objects.filter(product=product).order_by('-date')
+    feedback_paginator = Paginator(feedback, 5)
+    feedback_page = request.GET.get('page')
+    page_obj = feedback_paginator.get_page(feedback_page)
+    feedbacks = page_obj.object_list
+    response_form = ResponseForm()
+    context = {
+        'product': product,
+        'feedbacks': feedbacks,
+        'page_obj': page_obj,
+        'response_form': response_form
+    }
+    return render(request, 'admin_shop/product/product-detail.html', context)
+
+
+@login_required(login_url='/login')
+def deleteProduct(request):
+    product_id = int(request.GET.get('product_id'))
+    product = Product.objects.get(product_id=product_id)
+    images = ProductImage.objects.filter(product=product).values('name')
+    for image in images:
+        if os.path.exists(f"app/media/{image['name']}"):
+            os.remove(f"app/media/{image['name']}")
+    product.delete()
+    products = Product.objects.all()
+    categories = Category.objects.all()
+
+    paginator = Paginator(products, 15)
+
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    return redirect('/products', {'page_obj': page_obj, 'categories': categories})
+
+
+@login_required(login_url='/login')
+def categoryManager(request):
+    keyword = request.GET.get('keyword', '')
+    categories = Category.objects.filter(name__icontains=keyword)
+    paginator = Paginator(categories, 15)
+
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    print(page_obj.__dict__)
+    return render(request, 'admin_shop/category/index.html', {'page_obj': page_obj})
+
+@login_required(login_url='/login')
+def addCategory(request):
+    messages = '' 
+    error = ''
+    if request.method == 'POST':
+        form = CategoryForm(request.POST or None)
+        if form.is_valid():
+            form.save()
+            messages = "Thêm danh mục thành công"
+        else:
+            if request.method == 'POST':
+                error = 'Tên danh mục đã tồn tại'
+            else:
+                error = ''
+    else:
+        form = CategoryForm()
+    return render(request, 'admin_shop/category/add.html',
+                  {'form': form, 'error': error, 'messages' : messages})
+
+@login_required(login_url='/login')
+def editCategory(request):
+    messages = '' 
+    error = ''
+    if request.method == "POST":
+        category_id = request.POST.get('category_id')
+        category = get_object_or_404(Category, category_id=category_id)
+        print(category_id, category.__dict__)
+        form = CategoryForm(request.POST, instance=category)
+
+        if form.is_valid():
+            form.save()
+            messages = "Cập nhật danh mục thành công"
+        else:
+            error = 'Tên danh mục đã tồn tại'
+    else:
+        category_id = int(request.GET.get('category_id'))
+    form = Category.objects.get(category_id=category_id)
+
+    return render(request, 'admin_shop/category/edit.html',
+        {'form': form, 'error': error, 'messages' : messages})
+
+@login_required(login_url='/login')
+def deleteCategory(request):
+    category_id = int(request.GET.get('category_id'))
+    category = Category.objects.get(category_id=category_id)
+    if Product.objects.filter(category_id=category_id).exists():
+        return JsonResponse({
+            'success': False,
+            'message': "Danh mục không thể xóa do đã có sản phẩm"
+        })
+    else:
+        category.delete()
+        categories = Category.objects.all()
+        paginator = Paginator(categories, 15)
+
+        page_number = request.GET.get("page", 1)
+        page_obj = paginator.get_page(page_number)
+        return JsonResponse({
+            'success': True,
+            'message': "Danh mục đã được xóa thành công"
+        })

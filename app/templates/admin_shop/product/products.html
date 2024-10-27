@@ -1,0 +1,208 @@
+{% extends 'admin_shop/base.html' %}
+{% load my_filters %}
+{% block content %}
+<div class="content">
+    <div class="my-4">
+        <h4 class="my-4">Sản phẩm</h4>
+        <div class="my-4">
+            <div class="row justify-content-between">
+                <div class="col-auto d-flex mb-2">
+                    <div class="admin-search">
+                        <form action="/products" method="get" id="filter-form" class="d-flex position-relative justify-content-center align-items-center">
+                            <input type="text" class="form-control shadow-none search-input" type="search" placeholder="Tên sản phẩm" name="keyword" value="{{ request.GET.keyword }}" />
+                            <select class="ml-2 form-control" name="category" id="category">
+                                <option value="">Chọn danh mục</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.name }}" {% if request.GET.category == category.name %}selected{% endif %}>{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="ml-2 form-control" name="status" id="status">
+                                <option value="">Chọn trạng thái</option>
+                                <option value="Còn hàng" {% if request.GET.status == "Còn hàng" %}selected{% endif %}>Còn hàng</option>
+                                <option value="Hết hàng" {% if request.GET.status == "Hết hàng" %}selected{% endif %}>Hết hàng</option>
+                            </select>
+                            <div style="display: flex; align-items: center;">
+                                <button type="submit" class="btn btn-primary ms-2 btn-search-product">
+                                    <i class="fas fa-search"></i> Tìm kiếm
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <a href="/add_product" class="">
+                        <button class="btn btn-primary ">
+                            <i class="fa-solid fa-plus"></i>
+                            Thêm sản phẩm
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="list">
+            <div class="cart-table table-responsive">
+                <table class="table" id="product-table">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 250px;">Tên</th>
+                            <th scope="col">Giá</th>
+                            <th scope="col">Danh mục</th>
+                            <th scope="col">Kho</th>
+                            <th scope="col">Số lượng bán</th>
+                            <th scope="col">Ngày tạo</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in page_obj %}
+                        <tr class="cart-table-row align-items-center">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{product.productimage_set.first.name.url}}" alt="" class="cart-product-img" style="width: 64px;" />
+                                    <div class="cart-product-name text-center ms-2 title-product">
+                                        {{ product.name }}
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="">{{ product.price|floatformat:0|intcomma_dot }} đ</div>
+                            </td>
+                            <td>
+                                <div class="">{{ product.category }}</div>
+                            </td>
+                            <td>
+                                <div class="">{{ product.total_quantity }}</div>
+                            </td>
+                            <td>
+                                <div class="">{{ product.total_sold }}</div>
+                            </td>
+                            <td>
+                                <div class="">{{ product.time_created | date:"d/m/Y" }}</div>
+                            </td>
+                            <td>
+                                <div class="cart-product-action">
+                                    <a href="product-detail?product_id={{ product.product_id }}" class="btn-action btn-detail"><i class="far fa-eye"></i></a>
+                                    <a href="edit_product?product_id={{ product.product_id }}" class="btn-action btn-edit"><i class="fas fa-edit"></i></a>
+                                    <button class="btn-action btn-delete" data-id="{{ product.product_id }}"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+      <!-- Pagination -->
+        <div class="page-controller">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link page-number" href="?page=1" data-url="?page=1" data-page="1" aria-label="Previous">
+                            <span aria-hidden="true">«</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link page-number" href="#" aria-label="Previous">
+                            <span aria-hidden="true">«</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% for i in page_obj.paginator.page_range %}
+                    {% if i == page_obj.number %}
+                    <li class="page-item active" aria-current="page"><a class="page-link page-number" data-page="{{ i }}" href="#" data-url="?page={{ i }}">{{ i }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link page-number" href="?page={{ i }}" data-page="{{ i }}" data-url="?page={{ i }}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link page-number" href="?page={{ page_obj.next_page_number }}" data-page="{{ page_obj.next_page_number }}" data-url="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">»</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link page-number" href="#" aria-label="Next">
+                            <span aria-hidden="true">»</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+
+        <script>
+            // Hàm để gửi yêu cầu AJAX và cập nhật bảng
+            function updateTable(url) {
+                // Lấy các giá trị lọc từ form
+                var keyword = $("#filter-form input[name='keyword']").val();
+                var category = $("#filter-form #category").val();
+                var status = $("#filter-form #status").val();
+                // Thêm các giá trị lọc vào url
+                let params = "&keyword=" + keyword + "&category=" + category + "&status=" + status;
+                url = url + params;
+                $.ajax({
+                    url: url,
+                    type: "GET",
+                    success: function(data) {
+                        var newTable = $(data).find("#product-table").html();
+                        var newPaginate = $(data).find(".page-controller").html();
+                        $("#product-table").html(newTable);
+                        $(".page-controller").html(newPaginate);
+                    }
+                });
+            }
+
+            $(document).ready(function() {
+                $(document).on('click', ".pagination a", function(e) {
+                    e.preventDefault();
+                    var url = $(this).data("url");
+                    var page = $(this).data("page");
+                    let currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('page', page);
+                    window.history.pushState({}, '', currentUrl);
+                    updateTable(url);
+                });
+
+                $(document).on('click', ".btn-delete", function() {
+                    var id = $(this).data('id');
+                    Swal.fire({
+                        title: 'Xác nhận xóa',
+                        text: "Bạn có chắc chắn xóa sản phẩm này không",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Xóa',
+                        cancelButtonText: 'Hủy bỏ',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                url: '/delete_product?product_id=' + id,
+                                type: "GET",
+                                success: function(data) {
+                                    Swal.fire(
+                                        'Xóa!',
+                                        'Xóa sản phẩm thành công',
+                                        'success'
+                                    )
+                                    setTimeout(() => {
+                                        location.reload();
+                                    }, 1000);
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+            
+        </script>
+    </div>
+</div>
+{% endblock content %}
