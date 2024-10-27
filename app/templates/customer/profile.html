@@ -1,0 +1,229 @@
+{% extends 'customer/base.html' %}
+{% load my_filters   %} 
+{% block content %}
+    <div class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-8">
+                    <div class="card profile-infor">
+                        {% if messages %}
+                            <div class="alert alert-success">
+                                {{ messages }}
+                            </div>
+                        {% endif %}
+                        {% if error %}
+                            <div class="alert alert-danger">
+                                {{ error }}
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <div class="profile-infor-generation d-flex align-items-center">
+                                <img src=".{{user.avatar.url}}" alt="" class="profile-image">
+                                <div class="d-flex flex-column ms-4">
+                                    <h3>{{user.name}}</h3>
+                                    <p>Tham gia từ {{day_created}}</p>
+                                    <!-- <div class="d-flex gap-2">
+                                        <a href=""><i class="fa-brands fa-facebook"></i></a>
+                                        <a href=""><i class="fa-brands fa-instagram"></i></a>
+                                        <a href=""></a>
+                                    </div> -->
+                                </div>
+                            </div>
+
+                            <div class="mt-3 ms-5">
+                                <div class="d-flex align-items-center gap-3">
+                                    <h5 class="m-0">Thông tin người dùng</h5>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#change-info">
+                                        Thay đổi
+                                    </button>
+
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="change-info" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <form method="post" action="/profile">
+                                                    {% csrf_token %}
+                                                    <div class="modal-header">
+                                                        <h1 class="modal-title fs-5" id="staticBackdropLabel">Thay đổi thông tin</h1>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body change-infor">
+                                                        <div class="mb-3">
+                                                            <label for="" class="form-label">Họ và tên</label>
+                                                            <input type="text" class="form-control" name="name" id="" aria-describedby="helpId" placeholder="" value="{{user.name}}">
+                                                            <div class="invalid-feedback">Vui lòng điền họ và tên</div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label for="" class="form-label">Ngày sinh</label>
+                                                            <input type="date" class="form-control" name="dob" max="{{ today|date:'Y-m-d' }}" id="" aria-describedby="helpId" placeholder="" value="{{user.dob|date:'Y-m-d'}}">
+                                                            <div class="invalid-feedback">Vui lòng chọn ngày sinh</div>
+                                                        </div>
+                                                        <div class="mb-3 d-flex">
+                                                            <div class="me-4">Giới tính</div>
+                                                            <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="gender" id="male" value="Nam" {% if user.gender == 'Nam' %}checked{% endif %}>
+                                                                <label class="form-check-label" for="male">Nam</label>
+                                                            </div>
+                                                            <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="gender" id="female" value="Nữ" {% if user.gender == 'Nữ' %}checked{% endif %}>
+                                                                <label class="form-check-label" for="female">Nữ</label>
+                                                            </div>
+                                                            <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="gender" id="other" value="Khác" {% if user.gender == 'Khác' %}checked{% endif %}>
+                                                                <label class="form-check-label" for="other">Khác</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label for="" class="form-label">Số điện thoại</label>
+                                                            <input type="text" class="form-control" name="phone" id="" aria-describedby="helpId" placeholder="" value="{{user.phone}}">
+                                                            <div class="invalid-feedback">Vui lòng điền số điện thoại</div>
+                                                        </div>  
+                                                        <div class="mb-3">
+                                                            <label for="" class="form-label">Email</label>
+                                                            <input type="email" class="form-control" name="email" id="" aria-describedby="helpId" placeholder="" value="{{user.email}}">
+                                                            <div class="invalid-feedback">Vui lòng điền email</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                        <button type="submit" class="btn btn-primary submit-infor">Cập nhật</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-4 mb-2">
+                                    <div class="col-4">Họ và tên</div>
+                                    <div class="col-4">{{user.name|default:"Chưa điền thông tin"}}</div>
+                                </div>
+                                <div class="row my-2">
+                                    <div class="col-4">Tên đăng nhập</div>
+                                    <div class="col-4">{{user.username|default:"Chưa điền thông tin"}}</div>
+                                </div>
+                                <div class="row my-2">
+                                    <div class="col-4">Ngày sinh</div>
+                                    <div class="col-4">{{user.dob|date:'d/m/Y'|default:"Chưa điền thông tin"}}</div>
+                                </div>
+                                <div class="row my-2">
+                                    <div class="col-4">Giới tính</div>
+                                    <div class="col-4">{{user.gender|default:"Chưa điền thông tin"}}</div>
+                                </div>
+                                <div class="row my-2">
+                                    <div class="col-4">Số điện thoại</div>
+                                    <div class="col-4">{{user.phone|default:"Chưa điền thông tin"}}</div>
+                                </div>
+                                <div class="row my-2">
+                                    <div class="col-4">Email</div>
+                                    <div class="col-4">{{user.email|default:"Chưa điền thông tin"}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card profile-infor-order">
+                        <div class="card-body">
+                            <h4>Thông tin mua hàng</h4>
+                            <div class="row my-3">
+                                <div class="col-6">Đơn hàng gần nhất</div>
+                                <div class="col-6 text-end">{{day_last_order}} trước</div>
+                            </div>
+                            <div class="row my-3 text-info">
+                                <div class="col-6">Số đơn mới</div>
+                                <div class="col-6 text-end">{{total_order_new}}</div>
+                            </div>
+                            <div class="row my-3">
+                                <div class="col-6">Số đơn đã xác nhận</div>
+                                <div class="col-6 text-end">{{total_order_confirmed}}</div>
+                            </div>
+                            <div class="row my-3">
+                                <div class="col-6">Số đơn đang giao cho vận chuyển</div>
+                                <div class="col-6 text-end">{{total_order_preparing}}</div>
+                            </div>
+                            <div class="row my-3">
+                                <div class="col-6">Số đơn đang giao</div>
+                                <div class="col-6 text-end">{{total_order_delivering}}</div>
+                            </div>
+                            <div class="row my-3 text-danger">
+                                <div class="col-6">Số đơn đã hủy</div>
+                                <div class="col-6 text-end">{{total_order_canceled}}</div>
+                            </div>
+                            <div class="row my-3 text-success">
+                                <div class="col-6">Số đơn đã thành công</div>
+                                <div class="col-6 text-end">{{total_order_success}} ({{total_money_success|floatformat:0|intcomma_dot}} đ)</div>
+                            </div>
+                            <hr>
+                            <div class="row my-3 text-bold">
+                                <div class="col-6">Tổng số đơn</div>
+                                <div class="col-6 text-end">{{total_order}}</div>
+                            </div>
+                            <div class="row my-3 text-bold">
+                                <div class="col-6">Tổng số tiền</div>
+                                <div class="col-6 text-end">{{total_money|floatformat:0|intcomma_dot}} đ</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>  
+        <script>
+            $(document).ready(function() {
+
+                $('.invalid').hide();
+
+
+                $('form').submit(function(e) {
+                    e.preventDefault();
+                    var name = $('input[name="name"]').val().trim();
+                    var dob = $('input[name="dob"]').val();
+                    var gender = $('input[type="radio"]:checked').val();
+                    var phone = $('input[name="phone"]').val().trim();
+                    var email = $('input[name="email"]').val().trim();
+                    // console.log(name, dob, gender, phone, email)
+                    var isValid = true;
+                    if (name == '') {
+                        $('input[name="name"]').next().show();
+                        isValid = false;
+                    } else {
+                        $('input[name="name"]').next().hide();
+                    }
+                    if (dob == '') {
+                        $('input[name="dob"]').next().show();
+                        isValid = false;
+                    } else {
+                        $('input[name="dob"]').next().hide();
+                    }
+                    var re = /^\d{10}$/;
+                    if (phone == '') {
+                        $('input[name="phone"]').next().show();
+                        isValid = false;
+                    } else if (String(phone).match(re) == null) {
+                        $('input[name="phone"]').next().text('Số điện thoại không hợp lệ')
+                        $('input[name="phone"]').next().show();
+                        isValid = false;
+                    } else {
+                        $('input[name="phone"]').next().hide();
+                    }
+                    var re = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+
+                    if (email == '') {
+                        $('input[name="email"]').next().show();
+                        isValid = false;
+                    } else if (String(email).match(re) == null) {
+                        $('input[name="email"]').next().text('Email không hợp lệ')
+                        $('input[name="email"]').next().show();
+                        isValid = false;
+                    } else {
+                        $('input[name="email"]').next().hide();
+                    }
+
+                    if (!isValid) {
+                        return;
+                    }
+                    this.submit();
+                })
+            });
+        </script>
+{% endblock content %}

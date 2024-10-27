@@ -1,0 +1,8 @@
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8"
+    },
+    "python.formatting.provider": "none",
+    "python.terminal.activateEnvironment": true,
+    "python.defaultInterpreterPath": "~/.venv/Scripts/python.exe"
+}

@@ -1,0 +1,5 @@
+venv/
+app/migrations/
+app/__pycache__/
+app/media/
+app/templatetags/

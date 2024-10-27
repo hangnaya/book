@@ -1,0 +1,280 @@
+{% extends 'customer/base.html' %}
+{% load my_filters %}
+{% block content %}
+
+<!-- Content -->
+<div class="slider">
+    <div id="carouselExampleCaptions" class="carousel slide" data-bs-interval="false">
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1" aria-label="Slide 2"></button>
+            <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        </div>
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <img src="app/media/banner/banner4.jpg" class="d-block w-100" alt="...">
+                <div class="carousel-caption d-none d-md-block">
+                    {% comment %} <h3>Sale off 50%</h3>
+                    <p>Some representative placeholder content for the first slide.</p> {% endcomment %}
+                    {% comment %} <button class="carousel-btn btn btn-outline-primary">Buy now</button> {% endcomment %}
+                </div>
+            </div>
+            <div class="carousel-item">
+                <img src="app/media/banner/banner5.jpg" class="d-block w-100" alt="...">
+                <div class="carousel-caption d-none d-md-block">
+                    {% comment %} <h5>Second slide label</h5>
+                    <p>Some representative placeholder content for the second slide.</p> {% endcomment %}
+                </div>
+            </div>
+            <div class="carousel-item">
+                <img src="app/media/banner/banner3.jpg" class="d-block w-100" alt="...">
+                <div class="carousel-caption d-none d-md-block">
+                    {% comment %} <h5>Third slide label</h5>
+                    <p>Some representative placeholder content for the third slide.</p> {% endcomment %}
+                </div>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+            <i class="carousel-control-btn fa-solid fa-angle-left"></i>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+            <i class="carousel-control-btn fa-solid fa-angle-right"></i>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+
+    <!-- Sale -->
+    <div class='container'>
+        <div class="products-slider mt-5 p-3">
+            <div class="d-flex justify-content-between">
+                <h4>Sản phẩm bán chạy</h4>
+                <a href="/list-product" class="product-more">
+                    Xem thêm
+                    <i class="fa-solid fa-angles-right"></i>
+                </a>
+            </div>
+            <div class="swiper-theme-container">
+                <div class="swiper swiper-1">
+                    <!-- Additional required wrapper -->
+                    <div class="swiper-wrapper d-flex">
+                        <!-- Slides -->
+                        {% for product in top_selling_products %}
+                        <div class="swiper-slide">
+                            <a class="product" href="/product/{{product.product_id}}">
+                                <div class="product-card">
+                                    <div class="product-image">
+                                        <img src="{{product.productimage_set.first.name.url}}" alt="" class="product-img">
+                                    </div>
+                                    <div class="product-name">{{product.name}}</div>
+                                    <div class="product-price d-flex align-items-center">
+                                        {% if product.sale > 0 %}
+                                            <div class="product-price-original">{{product.price|floatformat:0|intcomma_dot}} đ</div>
+                                        {% endif %}
+                                        
+                                        <div class="product-price-sale color-red">
+                                            {% if product.sale > 0 %}
+                                                {{product.sale|floatformat:0|intcomma_dot}} đ
+                                            {% else %}
+                                                {{product.price|floatformat:0|intcomma_dot}} đ
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="product-rate d-flex align-items-center">
+                                        {% for i in 5|times %}
+                                        {% if i <= product.rating %}
+                                        <i class="fa-solid fa-star"></i>
+                                        {% else %}
+                                        <i class="fa-regular fa-star"></i>
+                                        {% endif %}
+                                        {% endfor %}
+                                        <div class="product-quantity-sold ms-2">(Đã bán {{product.total_sold}})</div>
+                                    </div>
+                                </div>
+                            </a>
+
+                        </div>
+                        {% endfor %}
+
+                    </div>
+                </div>
+                <div class="swiper-nav">
+                    <div class="swiper-button-prev swiper-button-prev-1">
+                        <i class="swiper-button-icon fa-solid fa-angle-left"></i>
+                    </div>
+                    <div class="swiper-button-next swiper-button-next-1">
+                        <i class="swiper-button-icon fa-solid fa-angle-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="products-slider mt-5 p-3">
+            <div class="d-flex justify-content-between">
+                <h4>Sản phẩm đang hot</h4>
+                <a href="/list-product" class="product-more">
+                    Xem thêm
+                    <i class="fa-solid fa-angles-right"></i>
+                </a>
+            </div>
+            <div class="swiper-theme-container">
+                <div class="swiper swiper-2">
+                    <!-- Additional required wrapper -->
+                    <div class="swiper-wrapper d-flex">
+                        <!-- Slides -->
+                        {% for product in hot_selling_products %}
+                        <div class="swiper-slide">
+                            <a class="product" href="/product/{{product.product_id}}">
+                                <div class="product-card">
+                                    <div class="product-image">
+                                        <img src="{{product.productimage_set.first.name.url}}" alt="" class="product-img">
+                                    </div>
+                                    <div class="product-name">{{product.name}}</div>
+                                    <div class="product-price d-flex align-items-center">
+                                        {% if product.sale > 0 %}
+                                            <div class="product-price-original">{{product.price|floatformat:0|intcomma_dot}} đ</div>
+                                        {% endif %}
+                                        
+                                        <div class="product-price-sale color-red">
+                                            {% if product.sale > 0 %}
+                                                {{product.sale|floatformat:0|intcomma_dot}} đ
+                                            {% else %}
+                                                {{product.price|floatformat:0|intcomma_dot}} đ
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="product-rate d-flex align-items-center">
+                                        {% for i in 5|times %}
+                                        {% if i <= product.rating %}
+                                        <i class="fa-solid fa-star"></i>
+                                        {% else %}
+                                        <i class="fa-regular fa-star"></i>
+                                        {% endif %}
+                                        {% endfor %}
+                                        <div class="product-quantity-sold ms-2">(Đã bán {{product.total_sold}})</div>
+                                    </div>
+                                </div>
+                            </a>
+
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="swiper-nav">
+                    <div class="swiper-button-prev swiper-button-prev-2">
+                        <i class="swiper-button-icon fa-solid fa-angle-left"></i>
+                    </div>
+                    <div class="swiper-button-next swiper-button-next-2">
+                        <i class="swiper-button-icon fa-solid fa-angle-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="products-slider my-5 p-3">
+            <div class="d-flex justify-content-between">
+                <h4>Sản phẩm đang sale</h4>
+                <a href="/list-product" class="product-more">
+                    Xem thêm
+                    <i class="fa-solid fa-angles-right"></i>
+                </a>
+            </div>
+            <div class="swiper-theme-container">
+                <div class="swiper swiper-3">
+                    <!-- Additional required wrapper -->
+                    <div class="swiper-wrapper d-flex">
+                        <!-- Slides -->
+                        {% for product in top_sale_products %}
+                        <div class="swiper-slide">
+                            <a class="product" href="/product/{{product.product_id}}">
+                                <div class="product-card">
+                                    <div class="product-image">
+                                        <img src="{{product.productimage_set.first.name.url}}" alt="" class="product-img">
+                                    </div>
+                                    <div class="product-name">{{product.name}}</div>
+                                    <div class="product-price d-flex align-items-center">
+                                        {% if product.sale > 0 %}
+                                            <div class="product-price-original">{{product.price|floatformat:0|intcomma_dot}} đ</div>
+                                        {% endif %}
+                                        
+                                        <div class="product-price-sale color-red">
+                                            {% if product.sale > 0 %}
+                                                {{product.sale|floatformat:0|intcomma_dot}} đ
+                                            {% else %}
+                                                {{product.price|floatformat:0|intcomma_dot}} đ
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="product-rate d-flex align-items-center">
+                                        {% for i in 5|times %}
+                                        {% if i <= product.rating %}
+                                        <i class="fa-solid fa-star"></i>
+                                        {% else %}
+                                        <i class="fa-regular fa-star"></i>
+                                        {% endif %}
+                                        {% endfor %}
+                                        <div class="product-quantity-sold ms-2">(Đã bán {{product.total_sold}})</div>
+                                    </div>
+                                </div>
+                            </a>
+
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="swiper-nav">
+                    <div class="swiper-button-prev swiper-button-prev-3">
+                        <i class="swiper-button-icon fa-solid fa-angle-left"></i>
+                    </div>
+                    <div class="swiper-button-next swiper-button-next-3">
+                        <i class="swiper-button-icon fa-solid fa-angle-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="welcome row align-items-center justify-content-center">
+            <div class="col-auto">
+                <img class="welcome-image" src="app/media/banner/banner4.png" alt="">
+            </div>
+            {% if not user.is_authenticated %}
+            <div class="col-auto">
+                <h1 class="welcome-title">Chào mừng bạn đến với <span class="welcome-title-bold">Shop</span></h1>
+                <p class="welcome-description">Mua sắm trực tuyến hàng đầu Việt Nam</p>
+                <h2 class="welcome-description">Đăng kí <span>thành viên</span> ngay hôm nay</h2>
+                <a href="/login" class="btn btn-outline-primary">Đăng kí <i class="fa-solid fa-angle-right ms-2"></i></a>
+            </div>
+            {% else %}
+            <div class="col-auto">
+                <h1 class="welcome-title">Chào mừng bạn đến với <span class="welcome-title-bold">Shop</span></h1>
+                <p class="welcome-description">Mua sắm trực tuyến hàng đầu Việt Nam</p>
+                <h2 class="welcome-description">Khám phá các sản phẩm hot nhất</h2>
+                <a href="/list-product" class="btn btn-primary">Khám phá ngay <i class="fa-solid fa-angle-right ms-2"></i></a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(() => {
+
+            console.log(1);
+            list_swiper = [1, 2, 3];
+            list_swiper.forEach((item) => {
+                var mySwiper = new Swiper(`.swiper-${item}`, {
+                    slidesPerView: 5,
+                    slidePerGroup: 1,
+                    spaceBetween: 30,
+                    loop: false,
+
+                    // Navigation arrows
+                    navigation: {
+                        nextEl: `.swiper-button-next-${item }`,
+                        prevEl: `.swiper-button-prev-${item}`,
+                    },
+                });
+            })
+        })
+    </script>
+
+    {% endblock content %}

@@ -1,0 +1,138 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Roboto:wght@300&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,500&display=swap');
+:root {
+    /* font-family: "Montserrat", sans-serif;
+  font-family: "Roboto", sans-serif; */
+    --blue: #3874ff;
+    --dark-blue: #2c6bfc;
+    --dark: #222834;
+    /* --dark: #081A51; */
+    --light-dark: #1B2B65;
+    --red: #ee4d2d;
+    --yellow: #ffce3d;
+    --green: #25b003;
+    --light-blue: #5a8afc;
+    --background-color: #f5f7fa;
+    --border: #e3e6ed;
+
+}
+html {
+    margin: 0;
+    padding: 0;
+}
+body {
+    font-family: "Roboto", sans-serif !important;
+    font-size: 16px;
+    background-color: var(--background-color);
+}
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1184px;
+    }
+}
+
+p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+i {
+    margin: 0;
+}
+
+a {
+    text-decoration: none !important;
+    color: #000;
+    transition: all 0.1s;
+}
+
+.table td {
+    padding: 12px 8px;
+}
+.text-container {
+    max-height: 3em; /* chiều cao tối đa là 2 dòng */
+    overflow: hidden; /* ẩn phần dư thừa của đoạn văn bản */
+    text-overflow: ellipsis; /* thêm dấu "..." */
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* số dòng cần hiển thị */
+    -webkit-box-orient: vertical;
+}
+
+.form-check-input[type="checkbox"] {
+    box-shadow: 1px 2px 2px var(--border);
+}
+.color-gray {
+    color: rgba(0, 0, 0, 0.54);
+}
+
+.color-blue {
+    color: var(--blue);
+}
+
+.color-red {
+    color: var(--red);
+}
+
+.color-green {
+    color: var(--green);
+}
+
+.color-white {
+    color: #fff;
+}
+
+.btn {
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+}
+
+.btn:hover {
+    border-color: var(--dark-blue);
+    color: var(--dark-blue);
+}
+
+.btn.active {
+    background-color: var(--blue);
+    color: #ffff;
+}
+
+.btn-light {
+    color: var(--blue);
+    background-color: var(--background-color);
+}
+
+.btn-light:hover {
+    background-color: var(--blue);
+    color: #ffff;
+}
+
+.btn-primary:hover {
+    background-color: var(--dark-blue);
+    color: #fff;
+}
+.btn.disable {
+    color: var(--border);
+    pointer-events: none;
+}
+
+.btn-min-width {
+    min-width: 140px;
+}
+
+.btn-secondary:hover {
+    outline: none !important;
+    color: #fff;
+    box-shadow: none;
+    border-color: #fff !important;
+}
+
+th,
+td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+label {
+    white-space: nowrap;
+}
