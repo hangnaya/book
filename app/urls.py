@@ -7,6 +7,13 @@ urlpatterns = [
     path('login', views.log_in, name='login'),
     path('logout', views.log_out, name='logout'),
     path('home', views.home, name='home'),
+
+    # coupon
+    path('coupons', views.couponManager, name='coupons'),
+    path('add_coupon', views.addCoupon, name='add_coupon'),
+    path('edit_coupon', views.editCoupon, name='edit_coupon'),
+    path('delete_coupon', views.deleteCoupon, name='delete_coupon'),
+
     # product
     path('products', views.productManager, name='products'),
     path('add_product', views.addProduct, name='add_product'),

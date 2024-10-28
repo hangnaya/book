@@ -239,6 +239,82 @@ def editProduct(request):
         'years': years
     })
 
+
+@login_required(login_url='/login')
+def addCoupon(request):
+    error = ''
+    messages = '' 
+    if request.method == "POST":
+        coupon_form = CouponForm(request.POST)
+        if coupon_form.is_valid():
+            coupon_form.save()
+            coupon_form = Coupon()
+            messages = "Thêm mã giảm giá thành công"
+        else:
+            error = 'Mã giảm giá đã tồn tại trong hệ thống'
+    else:
+        coupon_form = CouponForm()
+    return render(request, 'admin_shop/coupon/add-coupon.html', {'coupon_form': coupon_form, 'error': error, 'messages': messages})
+
+@login_required(login_url='/login')
+def editCoupon(request):
+    messages = '' 
+    error = ''
+    if request.method == "POST":
+        coupon_id = request.POST.get('coupon_id')
+        print(coupon_id)
+        coupon = get_object_or_404(Coupon, coupon_id=coupon_id)
+        form = CouponForm(request.POST, instance=coupon)
+
+        if form.is_valid():
+            form.save()
+            messages = "Cập nhật mã giảm giá thành công"
+        else:
+            error = 'Mã giảm giá đã tồn tại trong hệ thống'
+    else:
+        coupon_id = int(request.GET.get('coupon_id'))
+    form = Coupon.objects.get(coupon_id=coupon_id)
+    start_date = form.start_date
+    end_date = form.end_date
+    form.start_date = start_date.strftime('%Y-%m-%d')
+    form.end_date = end_date.strftime('%Y-%m-%d')
+
+    return render(request, 'admin_shop/coupon/edit.html',
+        {'form': form, 'error': error, 'messages' : messages})
+
+@login_required(login_url='/login')
+def deleteCoupon(request):
+    coupon_id = int(request.GET.get('coupon_id'))
+    coupon = Coupon.objects.get(coupon_id=coupon_id)
+    coupon.delete()
+    return JsonResponse({
+        'success': True,
+        'message': "Danh mục đã được xóa thành công"
+    })
+
+
+@login_required(login_url='/login')
+def couponManager(request):
+    keyword = request.GET.get('keyword', '')
+    coupons = Coupon.objects.filter(code__icontains=keyword).order_by('-coupon_id')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    if start_date == '' and end_date == '':
+        coupons = coupons.all()
+    elif end_date == '':
+        coupons = coupons.filter(start_date__gte=start_date)
+    elif start_date == '':
+        coupons = coupons.filter(end_date__lte=end_date)
+    else:
+        coupons = coupons.filter(Q(start_date__gte=start_date) & Q(end_date__lte=end_date))
+
+    paginator = Paginator(coupons, 15)
+
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'admin_shop/coupon/coupons.html', {'page_obj': page_obj})
+
+
 @login_required(login_url='/login')
 def productManager(request):
     categories = Category.objects.all()
