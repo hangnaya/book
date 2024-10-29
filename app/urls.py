@@ -8,6 +8,11 @@ urlpatterns = [
     path('logout', views.log_out, name='logout'),
     path('home', views.home, name='home'),
 
+    # address shipping
+    path('add-address', views.add_address, name='add-address'),
+    path('edit-address', views.edit_address, name='edit-address'),
+    path('delete-address', views.delete_address, name='delete-address'),
+
     # coupon
     path('coupons', views.couponManager, name='coupons'),
     path('add_coupon', views.addCoupon, name='add_coupon'),
@@ -26,4 +31,7 @@ urlpatterns = [
     path('add_category', views.addCategory, name='add_category'),
     path('edit_category', views.editCategory, name='edit_category'),
     path('delete_category', views.deleteCategory, name='delete_category'),
+
+    # dashboard
+    path('report', views.report, name='report'),
 ]

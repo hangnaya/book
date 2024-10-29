@@ -140,6 +140,64 @@ def home(request):
 
 
 
+def add_address(request):
+    if request.method == 'POST':
+        user = request.user
+        form = AddressShippingForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse({'status': 'error', 'message': 'Thông tin không hợp lệ'})
+        receiver = form.cleaned_data['receiver']
+        phone = form.cleaned_data['phone']
+        address = form.cleaned_data['address']
+        address_shipping = AddressShipping(receiver=receiver, phone=phone, address=address, customer=user)
+        address_shipping.save()
+        data = {
+            'status': 'success',
+            'result': {
+                'id': address_shipping.address_shipping_id,
+                'receiver': receiver,
+                'phone': phone,
+                'address': address
+            }
+        }
+        return JsonResponse(data)
+
+def edit_address(request):
+    if request.method == 'POST':
+        user = request.user
+        address_shipping_id = request.POST.get('address_shipping_id')
+        address = get_object_or_404(AddressShipping, address_shipping_id=address_shipping_id)
+        form = AddressShippingForm(request.POST, instance=address)
+        if not form.is_valid():
+            return JsonResponse({'status': 'error', 'message': 'Thông tin không hợp lệ'})
+        receiver = form.cleaned_data['receiver']
+        phone = form.cleaned_data['phone']
+        address = form.cleaned_data['address']
+        form.save()
+        data = {
+            'status': 'success',
+            'result': {
+                'id': address_shipping_id,
+                'receiver': receiver,
+                'phone': phone,
+                'address': address
+            }
+        }
+        return JsonResponse(data)
+
+def delete_address(request):
+    if request.method == 'POST':
+        address_shipping_id = int(request.POST.get('address_shipping_id'))
+        address = AddressShipping.objects.get(address_shipping_id=address_shipping_id)
+        address.delete()
+        return JsonResponse({
+            'success': True,
+            'id': address_shipping_id,
+            'message': "Địa chỉ giao hàng đã được xóa thành công"
+        })
+
+
+
 @login_required(login_url='/login')
 def addProduct(request):
     messages = '' 
@@ -385,6 +443,54 @@ def getProductDetailAdmin(request):
         'response_form': response_form
     }
     return render(request, 'admin_shop/product/product-detail.html', context)
+
+
+@login_required(login_url='/login')
+
+
+@login_required(login_url='/login')
+def report(request):
+    if request.method == "POST":
+        columns = []
+        values = []
+        type_report = request.POST.get('type_report', 1)
+        start_date = request.POST.get('start_date', '')
+        end_date = request.POST.get('end_date', '')
+        if start_date == '':
+            start_date = timezone.datetime(2020, 1, 1)
+        if end_date == '':
+            end_date = timezone.datetime(2050, 12, 31)
+        if type_report == '1':
+            report = Order.objects.filter(date__gte=start_date, date__lte=end_date).annotate(
+                month=TruncMonth('date')).values('month').annotate(revenue=Sum('total')).values(
+                'month', 'revenue').order_by('month')
+            for record in report:
+                record['month'] = record['month'].strftime('%m %Y').split()
+                record['month'] = 'Tháng ' + record['month'][0] + ' năm ' + record['month'][1]
+                columns.append(record['month'])
+                values.append(int(record['revenue']))
+            report_name = 'Báo cáo doanh thu theo tháng'
+        elif type_report == '2':
+            report = Order.objects.filter(date__gte=start_date, date__lte=end_date, status_id=7).annotate(
+                month=TruncMonth('date')).values('month').annotate(order_total=Count('order_id')).values(
+                'month', 'order_total').order_by('month')
+            for record in report:
+                record['month'] = record['month'].strftime('%m %Y').split()
+                record['month'] = 'Tháng ' + record['month'][0] + ' năm ' + record['month'][1]
+                columns.append(record['month'])
+                values.append(record['order_total'])
+            report_name = 'Báo cáo đơn hàng'
+        else:
+            report = Order.objects.filter(date__gte=start_date, date__lte=end_date, status_id=7).select_related(
+                'customer').values('customer__name').annotate(total=Sum('total')).order_by('total')
+            for record in report:
+                columns.append(record['customer__name'])
+                values.append(record['total'])
+            report_name = 'Báo cáo khách hàng'
+        return render(request, 'admin_shop/report.html',
+                      {'values': values, 'columns': columns, 'report_name': report_name})
+    else:
+        return render(request, 'admin_shop/report.html')
 
 
 @login_required(login_url='/login')
