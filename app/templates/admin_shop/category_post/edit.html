@@ -1,0 +1,79 @@
+{% extends 'admin_shop/base.html' %}
+
+{% block content %}
+<div class="content">
+    <h4 class="my-4">Cập nhật danh mục bài viết</h4>
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+    {% if messages %}
+        <div class="alert alert-success">
+            {{ messages }}
+        </div>
+    {% endif %}
+    <div class="content-body mb-5">
+        <form action="/edit_category_post?category_id={{ form.category_id }}" method="post" id="myForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="product-name" class="form-label fw-bold">Tên danh mục <span class="text-danger">*</span></label>
+                <input type="text" value="{{ form.name }}" class="form-control" name="name" id="category-name" placeholder="Nhập tên danh mục">
+                <input type="hidden" value="{{ form.category_id }}" name="category_id">
+            </div>
+            <div class="mb-3">
+                <label for="product-name" class="form-label fw-bold">Mô tả <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="description" placeholder="Nhập mô tả" value="{{ form.description }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Trạng thái <span class="text-danger">*</span></label>
+                <select class="form-select" name="is_active">
+                    <option value="1" {% if form.is_active == 1 %}selected{% endif %}>Kích hoạt</option>
+                    <option value="0" {% if form.is_active == 0 %}selected{% endif %}>Không kích hoạt</option>
+                </select>
+            </div>
+            <div class="d-flex justify-content-end gap-3">
+                <button type="button" class="btn btn-min-width btn-back">Quay lại</button>
+                <button class="btn btn-primary">Cập nhật danh mục</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        $('.btn-back').on('click', function() {
+            window.location.href = "{% url 'categories_post' %}";
+        });
+
+        $("#myForm").validate({
+            rules: {
+                name: {
+                    required: true,
+                    minlength: 3,
+                    maxlength: 100,
+                },
+                description: {required: true, maxlength: 255},
+                is_active: {required: true},
+            },
+            messages: {
+                name: {
+                    required: "Tên danh mục không được để trống",
+                    minlength: "Tên danh mục tối thiểu phải từ 3 ký tự trở nên",
+                    maxlength: "Tên danh mục tối đa 100 ký tự"
+                },
+                description: {
+                    required: "Mô tả không được để trống",
+                    maxlength: "Mô tả tối đa 255 ký tự"
+                },
+                is_active: {required: "Trạng thái không được để trống"},
+            },
+            errorPlacement: function(error, element) {
+                error.appendTo(element.parent());
+            },
+            submitHandler: function(form) {
+                form.submit();
+            }
+        });
+    })
+</script>
+{% endblock content %}
