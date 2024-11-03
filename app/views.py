@@ -198,6 +198,14 @@ def delete_address(request):
 
 
 
+def updateStatus(request):
+    user_id = int(request.POST.get('user_id'))
+    is_active = int(request.POST.get('is_active'))
+    user = User.objects.get(id=user_id)
+    user.is_active = is_active
+    user.save()
+    return JsonResponse({'status': 'true'})
+
 @login_required(login_url='/login')
 def addProduct(request):
     messages = '' 
@@ -446,6 +454,31 @@ def getProductDetailAdmin(request):
 
 
 @login_required(login_url='/login')
+def customerManager(request):
+    keyword = request.GET.get('keyword', '')
+    customers = User.objects.filter(name__icontains=keyword, is_superuser=0).annotate(
+        total_orders=Count('order', filter=Q(order__status_id=6)),
+        total_orders_canceled=Count('order', filter=Q(order__status_id=5)),
+        total_amount=Coalesce(Sum('order__total', filter=Q(order__status_id=6)), Value(0.0)),
+        type_customer=Case(
+            When(total_amount__gte=20000000, then=Value('VIP3')),
+            When(total_amount__gte=10000000, then=Value('VIP2')),
+            When(total_amount__gte=5000000, then=Value('VIP1')),
+            When(total_orders_canceled__gte=1, then=Value('BLACKLIST')),
+            default=Value('Thường')
+        )
+    )
+
+    type_customer = request.GET.get('type_customer', 'Tất cả')
+    if type_customer != 'Tất cả':
+        customers = customers.filter(type_customer=type_customer)
+
+    paginator = Paginator(customers, 15)
+
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'admin_shop/customer/customers.html', {'page_obj': page_obj})
+
 
 
 @login_required(login_url='/login')
@@ -511,6 +544,58 @@ def deleteProduct(request):
     page_obj = paginator.get_page(page_number)
     return redirect('/products', {'page_obj': page_obj, 'categories': categories})
 
+
+@login_required(login_url='/login')
+def viewProfile(request):
+    user_id = int(request.GET.get('user_id'))
+    if request.user.is_superuser == 1:
+        user = User.objects.get(id=user_id)
+        diff = date.today() - user.date_joined.date()
+        time = convert_diff(diff)
+
+        if user.is_superuser != 1:
+            day_last_order = 0
+
+            last_order = Order.objects.filter(customer=user).last()
+            if last_order: 
+                day_last_order = timezone.now() - last_order.date
+                day_last_order = convert_diff(day_last_order)
+
+            orders = Order.objects.filter(customer=user)
+            total_order = orders.count()
+            total_order_new = orders.filter(status=1).count()
+            total_order_confirmed = orders.filter(status=2).count()
+            total_order_prepare = orders.filter(status=3).count()
+            total_order_delivering = orders.filter(status=4).count()
+            total_order_canceled = orders.filter(status=5).count()
+            total_order_success = orders.filter(status=6).count()
+
+            total_money = orders.aggregate(
+                total_money=Sum('total'))['total_money']
+            total_money_success = orders.filter(status__name='Giao hàng thành công').aggregate(
+                total_money=Sum('total'))['total_money']
+            context = {
+                'user': user,
+                'day_last_order': day_last_order,
+                'total_order': total_order,
+                'total_order_new': total_order_new,
+                'total_order_confirmed': total_order_confirmed,
+                'total_order_preparing': total_order_prepare,
+                'total_order_delivering': total_order_delivering,
+                'total_order_canceled': total_order_canceled,
+                'total_order_success': total_order_success,
+                'total_money': total_money,
+                'total_money_success': total_money_success,
+                'time': time
+            }
+        else:
+            context = {
+                'user': user,
+                'time': time
+            }
+    else:
+        return redirect('/home')
+    return render(request, 'admin_shop/customer/profile.html', context=context)
 
 @login_required(login_url='/login')
 def categoryManager(request):

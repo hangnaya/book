@@ -1,0 +1,162 @@
+{% extends 'admin_shop/base.html' %}
+{% load my_filters %}
+{% block content %}
+    <div class="content">
+        <div class="customers">
+            <h4 class="my-4">Khách hàng</h4>
+            <div class="content-body">
+                <div class="col-12">
+                    <div class="admin-search">
+                        <form action="/customers" id="filter-form" method="get" class="search-customer" role="search">
+                            <input type="text" class="form-control shadow-none search-input" type="search" name="keyword" value="{{ request.GET.keyword }}" placeholder="Nhập tên khách hàng" />
+                            <div class="d-flex align-items-center">
+                                <label for="vip-customer" class="vip-customer form-label m-0">Loại thành viên</label>
+                                <select class="form-select m-0 ms-2" name="type_customer" id="vip-customer">
+                                    <option {% if request.GET.type_customer == "Tất cả" %}selected{% endif %} value="Tất cả">Tất cả</option>
+                                    <option {% if request.GET.type_customer == "VIP1" %}selected{% endif %} value="VIP1">VIP1</option>
+                                    <option {% if request.GET.type_customer == "VIP2" %}selected{% endif %} value="VIP2">VIP2</option>
+                                    <option {% if request.GET.type_customer == "VIP3" %}selected{% endif %} value="VIP3">VIP3</option>
+                                    <option {% if request.GET.type_customer == "BLACKLIST" %}selected{% endif %} value="BLACKLIST">BLACKLIST</option>
+                                    <option {% if request.GET.type_customer == "Thường" %}selected{% endif %} value="Thường">Thường</option>
+                                </select>
+                            </div>
+                            <div style="width: auto;">
+                                <button type="submit" class="btn btn-primary ms-2 btn-search-product">
+                                    <i class="fas fa-search"></i> Tìm kiếm
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="list mt-4" ,>
+                    <div class="coupon-table">
+                        <table class="table" id="customer-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Tên</th>
+                                    <th scope="col">Email</th>
+                                    <th scope="col">Số điện thoại</th>
+                                    <th scope="col">Trạng thái</th>
+                                    <th scope="col">Ngày tham gia</th>
+                                    <th scope="col">Số đơn hàng thành công</th>
+                                    <th scope="col">Tổng tiền hàng thành công</th>
+                                    <th scope="col">Số đơn đã hủy</th>
+                                    <th scope="col">Thành viên</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in page_obj %}
+                                <tr class="order-item {% if customer.type_customer == 'BLACKLIST' %}text-danger{% endif %}">
+                                    <td><a href="/view_profile?user_id={{ customer.id }}" class="color-blue">
+                                            <div class="d-flex align-items-center gap-1">
+                                                <img src="{{customer.avatar.url}}" alt="" class="order-user-img" />
+                                                <div class="order-user-name text-container ms-2 color-blue">{{ customer.name }} ({{ customer.username }})</div>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {{ customer.email }}
+                                    </td>
+                                    <td>
+                                        {{ customer.phone }}
+                                    </td>
+                                    <td>
+                                        {% if customer.is_active %}
+                                            <span class="badge badge-success">Hoạt động</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">Bị khóa</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ customer.date_joined | date:"d/m/Y" }}</td>
+                                    <td>{{ customer.total_orders }}</td>
+                                    <td>{{ customer.total_amount | floatformat:0 |intcomma_dot }}đ</td>
+                                    <td>{{ customer.total_orders_canceled }}</td>
+                                    <td>{{ customer.type_customer }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="page-controller">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-4">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link page-number" href="?page=1" data-page="1" data-url="?page=1" aria-label="Previous">
+                                    <span aria-hidden="true">«</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link page-number" href="#" aria-label="Previous">
+                                    <span aria-hidden="true">«</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% for i in page_obj.paginator.page_range %}
+                            {% if i == page_obj.number %}
+                            <li class="page-item active" aria-current="page">
+                                <a class="page-link page-number" href="#" data-page="{{ i }}" data-url="?page={{ i }}">{{ i }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link page-number" href="?page={{ i }}" data-page="{{ i }}" data-url="?page={{ i }}">{{ i }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link page-number" href="?page={{ page_obj.next_page_number }}" data-page="{{ page_obj.next_page_number }}"
+                                    data-url="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                    <span aria-hidden="true">»</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link page-number" href="#" aria-label="Next">
+                                    <span aria-hidden="true">»</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+
+                <script>
+                    function updateTable(url) {
+                        var keyword = $("#filter-form input[name='keyword']").val();
+                        var type_customer = $("#vip-customer").val();
+                        url = url + "&keyword=" + keyword + "&type_customer=" + type_customer;
+                        $.ajax({
+                            url: url,
+                            type: "GET",
+                            success: function(data) {
+                                var newTable = $(data).find("#customer-table").html();
+                                $("#customer-table").html(newTable);
+                                var newPaginate = $(data).find(".page-controller").html();
+                                $(".page-controller").html(newPaginate);
+                            }
+                        });
+                    }
+
+                    $(document).ready(function() {
+                        $(document).on('click', ".pagination a", function(e) {
+                            e.preventDefault();
+                            var url = $(this).data("url");
+                            var page = $(this).data("page");
+                            let currentUrl = new URL(window.location.href);
+                            currentUrl.searchParams.set('page', page);
+                            window.history.pushState({}, '', currentUrl);
+                            updateTable(url);
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+

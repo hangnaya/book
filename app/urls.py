@@ -43,6 +43,12 @@ urlpatterns = [
     path('add_post', views.addPost, name='add_post'),
     path('edit_post', views.editPost, name='edit_post'),
     path('delete_post', views.deletePost, name='delete_post'),
+
+    # customer
+    path('customers', views.customerManager, name='customers'),
+    path('view_profile', views.viewProfile, name='view_profile'),
+    path('update_status', views.updateStatus, name='update_status'),
+
     # dashboard
     path('report', views.report, name='report'),
 
