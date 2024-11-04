@@ -480,6 +480,69 @@ def customerManager(request):
     return render(request, 'admin_shop/customer/customers.html', {'page_obj': page_obj})
 
 
+@login_required(login_url='/login')
+def orderManager(request):
+    states = OrderStatus.objects.all()
+    keyword = request.GET.get('keyword', '')
+    orders = Order.objects.filter(customer__username__icontains=keyword).select_related('customer', 'status').order_by('-order_id')
+    status = request.GET.get('status', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    print(status)
+    if status:
+        orders = orders.filter(status__name=status)
+    if start_date == '' and end_date == '':
+        orders = orders.all()
+    elif end_date == '':
+        orders = orders.filter(date__gte=start_date)
+    elif start_date == '':
+        orders = orders.filter(date__lte=end_date)
+    else:
+        orders = orders.filter(Q(date__gte=start_date) & Q(date__lte=end_date))
+
+    paginator = Paginator(orders, 15)
+
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'admin_shop/order/orders.html', {'page_obj': page_obj, 'states': states})
+
+
+@login_required(login_url='/login')
+def getOrderDetail(request):
+    order_id = int(request.GET.get("order_id"))
+    order = Order.objects.filter(order_id=order_id).select_related('customer', 'status').first()
+    # price_order = order.total - order.discount - order.shipping
+    order_items = OrderItem.objects.filter(order_id=order_id).annotate(
+        curr_price=Case(When(product__sale__gte=0, then=F('product__sale')),
+                         default=F('product__price')),
+        total=F('curr_price') * F('quantity')).distinct()
+    price_order = order_items.aggregate(total_sum=Sum('total'))['total_sum']
+    if request.method == "POST":
+        status = int(request.POST.get('status'))
+        if order.status.order_status_id != status:
+            status = OrderStatus.objects.get(order_status_id=status)
+            order.status = status
+            order.save()
+            tracking = Tracking(order=order, order_status=status)
+            tracking.save()
+        else:
+            pass
+    if order.status.order_status_id == 1:
+        status_ids = [1, 2, 5]
+    elif order.status.order_status_id == 2:
+        status_ids = [2, 3, 5]
+    elif order.status.order_status_id == 3:
+        status_ids = [3, 4]
+    elif order.status.order_status_id == 4:
+        status_ids = [4, 5, 6]
+    elif order.status.order_status_id == 5:
+        status_ids = [5]
+    else:
+        status_ids = [6]
+    states = OrderStatus.objects.filter(order_status_id__in=status_ids).order_by("order_status_id")
+    return render(request, 'admin_shop/order/order-detail.html',
+                  {'order': order, 'order_items': order_items, 'states': states, 'price_order': price_order, })
+
 
 @login_required(login_url='/login')
 def report(request):

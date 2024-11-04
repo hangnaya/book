@@ -44,6 +44,10 @@ urlpatterns = [
     path('edit_post', views.editPost, name='edit_post'),
     path('delete_post', views.deletePost, name='delete_post'),
 
+    # order
+    path('admin_orders', views.orderManager, name='admin_orders'),
+    path('order_detail', views.getOrderDetail, name='order_datail'),
+
     # customer
     path('customers', views.customerManager, name='customers'),
     path('view_profile', views.viewProfile, name='view_profile'),

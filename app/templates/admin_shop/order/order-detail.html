@@ -1,0 +1,154 @@
+{% extends 'admin_shop/base.html' %}
+{% load my_filters %}
+{% block content %}
+    <div class="content">
+        <div class="order-detail">
+            <h4 class="my-3">Đơn hàng #{{ order.order_id }}</h4>
+            <div class="">
+                Người đặt hàng:
+                <a href="/view_profile?user_id={{ order.customer.id }}">
+                    <span class="color-blue">{{ order.customer.name }} ({{ order.customer.username }})</span>
+                </a>
+            </div>
+            <div class="mt-4">
+                <form action="/order_detail?order_id={{ order.order_id }}" method="post">
+                    {% csrf_token %}
+                    <div class="my-3 d-flex align-items-center gap-3">
+                        <label for="" class="form-label m-0">Trạng thái đơn hàng</label>
+                        <select class="form-select" name="status" id="">
+                            {% for status in states %}
+                            <option value="{{ status.order_status_id }}">{{ status.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-primary" type="submit">Cập nhật</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="order-address-shipping my-5">
+                <div class="row">
+                    <div class="col-7">
+                        <h5>Thông tin địa chỉ</h5>
+                        <div class="address-infor">
+                            <table class="table table-borderless">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <i class="fa-solid fa-user m-0 color-blue"></i>
+                                                Tên
+                                            </div>
+                                        </td>
+                                        <td>:</td>
+                                        <td class="d-flex">{{ order.receiver }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <i class="fa-solid fa-house color-blue"></i>
+                                                Địa chỉ
+                                            </div>
+                                        </td>
+                                        <td>:</td>
+                                        <td class="d-flex">{{ order.address }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <i class="fa-solid fa-phone color-blue"></i>
+                                                Số điện thoại
+                                            </div>
+                                        </td>
+                                        <td>:</td>
+                                        <td class="d-flex">{{ order.phone }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Đơn hàng</h5>
+                                <div class="order-infor-money">
+                                    <div class="row my-2 pt-2">
+                                        <div class="col-9">Giá sản phẩm</div>
+                                        <div class="col-3 d-flex flex-row-reverse">{{ price_order |floatformat:0|intcomma_dot }}đ</div>
+                                    </div>
+                                    <div class="row my-2">
+                                        <div class="col-9">Voucher</div>
+                                        <div class="col-3 d-flex flex-row-reverse color-red">
+                                            {{ order.discount |floatformat:0|intcomma_dot }}đ
+                                        </div>
+                                    </div>
+                                    <div class="row my-2">
+                                        <div class="col-9">Phí vận chuyển</div>
+                                        <div class="col-3 d-flex flex-row-reverse">{{ order.shipping |floatformat:0|intcomma_dot }}đ</div>
+                                    </div>
+                                </div>
+                                <div class="row my-2 fs-5">
+                                    <div class="col-9">Tổng tiền</div>
+                                    <div class="col-3 d-flex flex-row-reverse">{{ order.total | floatformat:0|intcomma_dot }}đ</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="order-list-item">
+                <h5>Danh sách sản phẩm</h5>
+                <div class="order-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width: 500px;">Sản phẩm</th>
+                                <th scope="col">Loại</th>
+                                <th scope="col">Số lượng</th>
+                                <th scope="col">Giá</th>
+                                <th scope="col">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order_item in order_items %}
+                            <tr class="order-table-row">
+                                <!-- viết một hàng dữ liệu sản phẩm trong giỏ hàng -->
+                                <td>
+                                    <a href="/product-detail?product_id={{ order_item.product.product_id }}">
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{order_item.product.productimage_set.first.name.url}}" alt="" class="order-product-img" style="width: 64px;" />
+                                            <div class="order-product-name text-container ms-3">{{ order_item.product.name }}</div>
+                                        </div>
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="order-product-size">
+                                        {% if item.type == '0' %}
+                                            Sách mới
+                                        {% else %}
+                                            Sách cũ
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="order-product-quantity">{{ order_item.quantity }}</div>
+                                </td>
+                                <td>
+                                    <div class="order-product-price">
+                                        {{ order_item.curr_price | floatformat:0|intcomma_dot }}đ
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="order-product-total-price">{{ order_item.total | floatformat:0|intcomma_dot }}đ</div>
+                                </td>
+
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
