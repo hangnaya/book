@@ -138,6 +138,225 @@ def home(request):
     return render(request, 'customer/home.html', context)
 
 
+def listProduct(request):
+    categories = Category.objects.all()
+    search = request.GET.get('search')
+
+    context = {
+        'categories': categories,
+        'search': search
+    }
+    return render(request, 'customer/list-product.html', context)
+
+
+@api_view(['GET'])
+def getListProduct(request):
+    search = request.GET.get('search')
+
+    category = request.GET.get('category')
+    if category:
+        category = [int(category) for category in category.split(',')]
+
+    status = request.GET.get('status')
+    if status:
+        status = [status for status in status.split(',')]
+
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    # rating = request.GET.get('rating')
+    sort = request.GET.get('sort')
+    top_sale_products = request.GET.get('top_sale_products')
+    top_selling_products = request.GET.get('top_selling_products')
+    best_selling_product = request.GET.get('best_selling_product')
+
+    products = Product.objects.annotate(
+        quantity=Sum('productdetail__quantity')
+    )
+    print(products)
+    if search is not None and search != '':
+        products = products.filter(name__icontains=search)
+
+    if category:
+        categories = Category.objects.filter(category_id__in=category)
+        products = products.filter(category__in=categories)
+
+    if status and len(status) == 1:
+        if status[0] == 'instock':
+            products = products.filter(quantity__gt=0)
+        elif status[0] == 'outstock':
+            products = products.filter(quantity=0)
+
+    if min_price:
+        products = products.filter(price__gte=int(min_price))
+
+    if max_price:
+        products = products.filter(price__lte=int(max_price))
+
+    # if rating:
+    #     products = products.filter(rating__gte=rating)
+
+    if top_sale_products:
+        products = products.order_by('-sale')
+
+    if top_selling_products:
+        products = products.order_by('-total_sold')
+
+    if best_selling_product:
+        now = timezone.now()
+        products = (products.filter(
+            orderitem__order__date__month=now.month,
+            orderitem__order__date__year=now.year
+        ).annotate(
+            total_sold_month=Sum('orderitem__quantity')
+        ).order_by('-total_sold_month'))
+                    
+    if sort == 'price_asc':
+        products = products.order_by('price')
+    elif sort == 'price_desc':
+        products = products.order_by('-price')
+
+    paginator = PageNumberPagination()
+    paginator.page_query_param = 'page'
+    paginator.page_size = 20
+    result_page = paginator.paginate_queryset(products, request)
+    serializer = ProductSerializer(result_page, many=True, context={'request': request})
+
+    respone = paginator.get_paginated_response(serializer.data)
+    respone.data['current_page'] = paginator.page.number
+    respone.data['total_page'] = paginator.page.paginator.num_pages
+    return respone
+
+
+def getProductDetail(request, product_id):
+    product = Product.objects.filter(pk=product_id).annotate(
+        quantity=Sum('productdetail__quantity'),
+        rating=Avg('feedback__rating')
+    ).first()
+    product.rating = product.rating if product.rating is not None else 0
+
+    sales = product.productsale_set.filter(start_date__lte=timezone.now(), end_date__gte=timezone.now()).first()
+    feedbacks = Feedback.objects.filter(product=product).order_by('-date')
+    num_feedbacks = feedbacks.count()
+    feedback_paginator = Paginator(feedbacks, 5)
+    feedback_page = request.GET.get('page')
+    feedbacks = feedback_paginator.get_page(feedback_page)
+
+    related_products = (Product.objects
+                        .filter(category=product.category)
+                        .exclude(pk=product.pk)
+                        )[:10].all()
+
+    context = {
+        'product': product,
+        'sales': sales,
+        'num_feedbacks': num_feedbacks,
+        'feedbacks': feedbacks,
+        'related_products': related_products
+    }
+    return render(request, 'customer/product_detail.html', context)
+
+
+@login_required(login_url='/login')
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+def add_to_cart(request):
+    if request.method == 'GET':
+        cart = Cart.objects.filter(customer=request.user).last()
+        if not cart:
+            cart = Cart.objects.create(customer=request.user)
+        cartitems = CartItem.objects.filter(cart=cart)
+        cartitems = cartitems.annotate(
+            price=Case(
+                When(product__sale__gte=0, then=F('product__sale')),
+                default=F('product__price'),
+                output_field=FloatField()
+            ),
+            total_price=Round(ExpressionWrapper(F('price') * F('quantity'), output_field=FloatField())
+                              )).distinct()
+        voucher_wallet = VoucherWallet.objects.filter(customer=request.user).first()
+        if voucher_wallet:
+            voucher_wallet = VoucherWallet.objects.create(customer=request.user)
+            voucher_wallet.save()
+
+        coupons = Coupon.objects.filter(start_date__lte=timezone.now(),
+                                         end_date__gte=timezone.now()).order_by('discount') 
+
+        context = {
+            'cart': cart,
+            'cartitems': cartitems,
+            'voucher_wallet': voucher_wallet,
+            'coupons': coupons
+        }
+        return render(request, 'customer/order/cart.html', context=context)
+
+    if request.method == 'POST':
+        id = request.POST.get('product_id')
+        product = get_object_or_404(Product, pk=id)
+
+        type = request.POST.get('type')
+        quantity = request.POST.get('quantity')
+        quantity = int(quantity)
+        cart = Cart.objects.filter(customer=request.user).last()
+        if not cart:
+            cart = Cart.objects.create(customer=request.user)
+
+        cart_item = CartItem.objects.filter(cart=cart, product=product, type=type).first()
+        product_detail = ProductDetail.objects.filter(product=product, type=type).first()
+        if cart_item:
+            if cart_item.quantity + quantity > product_detail.quantity:
+                return JsonResponse({'status': 'error',
+                                     'message': 'Số lượng sản phẩm không đủ, trong giỏ hàng đã có ' + str(
+                                         cart_item.quantity) + ' sản phẩm'})
+            else:
+                cart_item.quantity = cart_item.quantity + quantity
+        else:
+            cart_item = CartItem.objects.create(cart=cart, product=product, type=type, quantity=quantity)
+        cart_item.save()
+        num_cart_item = cart.cartitem_set.count()
+        return JsonResponse(
+            {'status': 'success', 'message': 'Thêm vào giỏ hàng thành công', 'num_cart_item': num_cart_item})
+
+def edit_cart_item(request):
+    cart_item_id = request.POST.get('cart_item_id')
+    quantity = request.POST.get('quantity')
+    cart_item = CartItem.objects.get(pk=cart_item_id)
+    product_detail = ProductDetail.objects.filter(product=cart_item.product, type=cart_item.type).first()
+    if int(quantity) > product_detail.quantity:
+        return JsonResponse({'status': 'error', 'message': 'Số lượng sản phẩm không đủ'})
+    cart_item.quantity = int(quantity)
+    cart_item.save()
+    if int(quantity) == 0:
+        cart_item.delete()
+    return JsonResponse({'status': 'success', 'message': 'Cập nhật thành công'})
+
+
+def delete_cart_item(request):
+    cart_item_id = request.POST.get('cart_item_id')
+    cart_item = CartItem.objects.get(pk=cart_item_id)
+    cart_item.delete()
+    return JsonResponse({'success': 'Xóa thành công'})
+
+
+@api_view(['GET'])
+def check_coupon(request):
+    coupon_code = request.GET.get('coupon')
+    coupon = Coupon.objects.filter(code=coupon_code).order_by('-start_date').first()
+    if not coupon:
+        return JsonResponse({'status': 'error', 'message': 'Mã giảm giá không hợp lệ'})
+
+    now = timezone.now()
+    if now < coupon.start_date or now > coupon.end_date:
+        return JsonResponse({'status': 'error', 'message': 'Mã giảm giá đã hết hạn'})
+
+    total_money = request.GET.get('total_money')
+    total_money = float(total_money)
+    if total_money < coupon.condition:
+        locale.setlocale(locale.LC_ALL, 'vi_VN.UTF-8')
+        condition = locale.format_string('%dđ', int(coupon.condition), grouping=True).replace(',', '.')
+        return JsonResponse(
+            {'status': 'error', 'message': 'Chưa đủ điều kiện đơn hàng tối thiếu. Đơn hàng tối thiểu là ' + condition})
+
+    return JsonResponse({'status': 'success', 'discount': coupon.discount, 'condition': coupon.condition})
+
 
 
 def add_address(request):

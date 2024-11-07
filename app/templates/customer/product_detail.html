@@ -1,0 +1,665 @@
+{% extends 'customer/base.html' %}
+{% load my_filters %}
+{% load static %}
+
+{% block content%}
+<!-- Content -->
+<div class="py-4">
+    <div class="product-detail">
+        <div class="container">
+            {% comment %} <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/home">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a href="">Áo phông</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Library</li>
+                </ol>
+            </nav> {% endcomment %}
+
+            <div class="row product-information p-4">
+                <div class="col-6">
+                    <div class="product-image d-flex flex-column">
+                        <div class="product-image-primary d-flex justify-content-center">
+                            <img src="{{ product.productimage_set.first.name.url }}" alt="">
+                        </div>
+                        <div class="swiper-theme-container">
+                            <div class="swiper swiper-1">
+                                <div class="swiper-wrapper d-flex ">
+                                    {% for image in product.productimage_set.all %}
+                                    <div class="swiper-slide">
+                                        <img src="{{image.name.url}}">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="swiper-nav">
+                                <div class="swiper-button-prev swiper-button-prev-1">
+                                    <i class="swiper-button-icon fa-solid fa-angle-left"></i>
+                                </div>
+                                <div class="swiper-button-next swiper-button-next-1">
+                                    <i class="swiper-button-icon fa-solid fa-angle-right"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="d-flex flex-column gap-3">
+                        <div>
+                            <h3>{{ product.name }}</h3>
+                        </div>
+                        <div class="d-flex">
+                            <div class='d-flex gap-2'>
+                                <div class='rating'>
+                                    {% for i in 5|times %}
+                                    {% if i <= product.rating %}
+                                    <i class="fa-solid fa-star"></i>
+                                    {% else %}
+                                    <i class="fa-regular fa-star"></i>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {{ product.rating}}
+                            </div>
+                            <div class="rate-quantity"><span>{{ num_feedbacks}}</span> đánh giá</div>
+                            <div class="sold-quantity"><span>{{ product.total_sold }}</span> đã bán</div>
+                        </div>
+                        {% load humanize %}
+                        <div class="price d-flex align-items-center gx-2">
+                            {% if product.sale > 0 %}
+                                <div class="text-decoration-line-through">
+                                    {{product.price|floatformat:0|intcomma_dot}} đ
+                                </div>
+                            {% endif %}
+                            
+                            {% if product.sale > 0 %}
+                                <h2 class="sale-price m-0">{{product.sale|floatformat:0|intcomma_dot}} đ</h2>
+                            {% else %}
+                                <h2 class="sale-price m-0">{{product.price|floatformat:0|intcomma_dot}} đ</h2>
+                            {% endif %}
+                        </div>
+                        {% if product.quantity != 0 %}
+                        
+                        <p class="m-0 color-red h5">
+                            Còn hàng
+                        </p>
+                        {% else %} 
+                        <p class="m-0 color-red h5">
+                            Hết hàng
+                        </p>
+                        {% endif %}
+                        <div class="typeBook my-2">
+                            <div class="row">
+                                <div class="col-2 d-flex align-items-center">Loại sách</div>
+                                <div class="col-10 type-option">
+                                    <button class="btn" data-type="0">Mới</button>
+                                    <button class="btn" data-type="1">Cũ</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="quantity mt-2">
+                            <div class="row">
+                                <div class="col-2 d-flex align-items-center">Số lượng</div>
+                                <div class="col-10 d-flex">
+                                    <button class="btn btn-quantity btn-minus disable">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <input type="number" class="form-control input-quantity" name='quantity' min="1" value="1">
+                                    <button class="btn btn-quantity btn-plus disable">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                    <div class="quantity-available d-flex align-items-center color-gray ms-3">{{product.quantity}} sản phẩm có sẵn</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if request.user.is_superuser == 0 %}
+                        
+                        <div class="buy d-flex gap-4 mt-4">
+                            <button class="add-cart btn" data-action='add-cart'>
+                                <i class="fa-sharp fa-solid fa-cart-plus me-2"></i>
+                                Thêm vào giỏ hàng
+                            </button>
+                            <button class="buy-now btn btn-primary" data-action='buy-now'>Mua ngay</button>
+                            <form action='/buynow' method='post'>
+                                {% csrf_token %}
+                                <input type="hidden" name='product_id' value='{{ product.product_id }}'>
+                                <input type="hidden" name='type' value=''>
+                                <input type="hidden" name='quantity' value=''>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="product-more-infor">
+        <div class="container">
+            <ul class="nav nav-pills my-3" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pills-information-tab" data-bs-toggle="pill" data-bs-target="#pills-information" type="button" role="tab" aria-controls="pills-information" aria-selected="true">Thông tin</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pills-feedback-tab" data-bs-toggle="pill" data-bs-target="#pills-feedback" type="button" role="tab" aria-controls="pills-feedback" aria-selected="false">Đánh giá</button>
+                </li>
+            </ul>
+            <div class="tab-content bg-white p-3" id="pills-tabContent">
+                <div class="tab-pane fade  show active" id="pills-information" role="tabpanel" aria-labelledby="pills-information-tab">
+                    <p>
+                        {{ product.description }}
+                    </p>
+                </div>
+                <div class="tab-pane fade " id="pills-feedback" role="tabpanel" aria-labelledby="pills-feedback-tab">
+                    <div class="product-rating-overview">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <h2 class="rating-number m-0">
+                                {{ product.rating }}
+                                <span class="fs-5">/5</span>
+                            </h2>
+                            <div class="rating">
+                                {% for i in 5|times %}
+                                {% if i <= product.rating %}
+                                <i class="fa-solid fa-star"></i>
+                                {% else %}
+                                <i class="fa-regular fa-star"></i>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            <div>{{num_feedbacks}} đánh giá</div>
+                        </div>
+                    </div>
+                    <div class="product-rating__list">
+
+                    </div>
+
+                    <div class="page-controller">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center mt-5">
+                                <li class="page-item disabled">
+                                    <a class="page-link pre-page" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item active" aria-current="page"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link next-page" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="similar-product">
+        <div class="container">
+            <div class="products-slider mt-3 p-3">
+                <div class="d-flex justify-content-between">
+                    <h4>Sản phẩm liên quan</h4>
+                    <a href="" class="product-more">
+                        Xem thêm
+                        <i class="fa-solid fa-angles-right"></i>
+                    </a>
+                </div>
+                <div class="swiper-theme-container">
+                    <div class="swiper swiper-2">
+                        <!-- Additional required wrapper -->
+                        <div class="swiper-wrapper d-flex">
+                            <!-- Slides -->
+                            {% for product in related_products %}
+                            
+                            <div class="swiper-slide">
+                                <a class="product" href="/product/{{product.product_id}}">
+                                    <div class="product-card">
+                                        <div class="product-image">
+                                            <img src="{{ product.productimage_set.first.name.url}}" alt="" class="product-img">
+                                        </div>
+                                        <div class="product-name">{{product.name}}</div>
+                                        <div class="product-price d-flex align-items-center">
+                                            {% if product.sale > 0 %}
+                                                <div class="product-price-original">{{product.price|floatformat:0|intcomma_dot}} đ</div>
+                                            {% endif %}
+                                            
+                                            <div class="product-price-sale color-red">
+                                                {% if product.sale > 0 %}
+                                                    {{product.sale|floatformat:0|intcomma_dot}} đ
+                                                {% else %}
+                                                    {{product.price|floatformat:0|intcomma_dot}} đ
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="product-rate d-flex align-items-center">
+                                    
+                                                {% for i in 5|times %}
+                                                    {% if i <= product.rating %}
+                                                        <i class="fa-solid fa-star"></i>
+                                                    {% else %}
+                                                        <i class="fa-regular fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            <div class="product-quantity-sold ms-2">(Đã bán {{product.total_sold}})</div>
+                                        </div>
+                                    </div>
+                                </a>
+
+                            </div>
+                
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="swiper-nav">
+                        <div class="swiper-button-prev swiper-button-prev-2">
+                            <i class="swiper-button-icon fa-solid fa-angle-left"></i>
+                        </div>
+                        <div class="swiper-button-next swiper-button-next-2">
+                            <i class="swiper-button-icon fa-solid fa-angle-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(() => {
+        var mySwiper = new Swiper('.swiper-1', {
+            slidesPerView: 4,
+            slidePerGroup: 1,
+            spaceBetween: 30,
+            loop: false,
+
+            // Navigation arrows
+            navigation: {
+                nextEl: '.swiper-button-next-1',
+                prevEl: '.swiper-button-prev-1',
+            },
+        });
+
+        $('.product-image .swiper-slide').click(function() {
+            var imgSrc = $(this).find('img').attr('src');
+            $('.product-image-primary').find('img').attr('src', imgSrc);
+        })
+
+        var mySwiper = new Swiper('.swiper-2', {
+            slidesPerView: 5,
+            slidePerGroup: 1,
+            spaceBetween: 30,
+            loop: false,
+
+            // Navigation arrows
+            navigation: {
+                nextEl: '.swiper-button-next-2',
+                prevEl: '.swiper-button-prev-2',
+            },
+        });
+
+        var rating = {{ product.rating }};
+        var rating_html = '';
+        for(var i = 1; i<= 5; i++) {
+            if (i <= rating) {
+                rating_html += '<i class="fa-solid fa-star"></i>';
+            } else if (i == Math.ceil(rating)) {
+                rating_html += '<i class="fa-solid fa-star-half-stroke"></i>';
+            } else {
+                rating_html += '<i class="fa-regular fa-star"></i>';
+            }
+        }
+        $('.rating').html(rating_html);
+
+        var variantProducts = []
+        {% for variant in product.productdetail_set.all %}
+        variantProducts.push({
+            type: "{{ variant.type }}",
+            quantity: parseInt("{{ variant.quantity }}")
+        })
+        {% endfor %}
+        console.log("variantProducts", variantProducts)
+
+        var types = {};
+
+        for (var i = 0; i < variantProducts.length; i++) {
+            var product = variantProducts[i];
+            var type = product.type;
+            var quantity = product.quantity;
+            if (!types[type]) {
+                types[type] = quantity;
+            } else {
+                types[type] += quantity;
+            }
+        }
+
+        var type_option = []
+        for (var type in types) { 
+            type_option.push(`<button class="btn me-2" data-type="${type}">${type == 0 ? 'Mới' : 'Cũ'}</button>`)
+        }
+        $('.type-option').html(type_option.join(''));
+
+        var outOfStockType = []
+        for (var type in types) {
+            if (types[type] === 0) {
+                outOfStockType.push(type);
+            }
+        }
+
+        function removeOutOfStock() {
+            $('.typeBook .btn').each(function() {
+                type = $(this).data('type');
+                if (outOfStockType.includes(type)) {
+                    $(this).addClass('disable');
+                }
+            })
+        }
+
+        function removeVariation() {
+            $('.typeBook .btn').each(function() {
+                type = $(this).data('type');
+                var result = variantProducts.find(product => product.type == type && product.quantity > 0)
+                if (!result) $(this).addClass('disable');
+            })
+        }
+
+        removeOutOfStock();
+
+        $(document).on('click', '.typeBook .btn', function() {
+            if ($(this).hasClass('active')) {
+                $(this).removeClass('active');
+                $('.typeBook .btn').removeClass('disable')
+                $('.btn-plus, .btn-minus').addClass('disable')
+                
+                type = $('.typeBook .btn.active').data('type');
+
+                const totalProducts = variantProducts.reduce((total, product) => {
+                    if (product.type == type) {
+                        return total + product.quantity;
+                    }
+                    return total;
+                }, 0);
+
+                $('.typeBook .btn').each(function() {
+                    type = $(this).data('type');
+                    var result = variantProducts.find(product => product.type == type && product.quantity > 0)
+                    if (!result) $(this).addClass('disable');
+                })
+                $(".quantity-available").text(totalProducts + " sản phẩm có sẵn");
+                if(totalProducts < parseInt(inputQuantity.val())) {
+                    $('.btn-plus').addClass('disable')
+                    inputQuantity.val(totalProducts)
+                }
+            } else {
+                $('.typeBook .btn').removeClass('active');
+                $(this).addClass('active');
+
+                type = $(this).data('type');
+
+                const totalProducts = variantProducts.reduce((total, product) => {
+                    if (product.type == type) {
+                        return total + product.quantity;
+                    }
+                    return total;
+                }, 0);
+
+                $(".quantity-available").text(totalProducts + " sản phẩm có sẵn");
+                $('.btn-plus, .btn-minus').removeClass('disable')
+                if(totalProducts < parseInt(inputQuantity.val())) {
+                    $('.btn-plus').addClass('disable')
+                    inputQuantity.val(totalProducts)
+                }
+            }
+        })
+
+        var inputQuantity = $("input[name='quantity']");
+
+        $(".btn-plus").click(function() {
+            var availableQuantity = parseInt($(".quantity-available").text().match(/\d+/)[0], 10);
+            var currentValue = parseInt(inputQuantity.val());
+            if (currentValue < availableQuantity) {
+                inputQuantity.val(currentValue + 1);
+                $(".btn-minus").removeClass('disable')
+            }
+            if (currentValue + 1 == availableQuantity) {
+                $(this).addClass('disable');
+            }
+        });
+        $(".btn-minus").click(function() {
+            var availableQuantity = parseInt($(".quantity-available").text().match(/\d+/)[0], 10);
+            var currentValue = parseInt(inputQuantity.val());
+            if (currentValue > 1) {
+                inputQuantity.val(currentValue - 1);
+                $(".btn-plus").removeClass('disable')
+            }
+            if (currentValue-1 == 0) {
+                $(this).addClass('disable');
+            }
+        });
+
+
+        // Add to cart
+        $('.add-cart').click(function() {
+            var type = $('.type-option button.active').data('type');
+            var quantity = parseInt(inputQuantity.val());
+
+            if (type == undefined) {
+            // Hiển thị thông báo cho người dùng
+                Swal.fire(
+                    'Xác nhận!',
+                    'Vui lòng chọn loại sản phẩm!',
+                    'warning'
+                )
+                return false;
+            }
+
+            {% if not user.is_authenticated %}
+                window.location.href = '/login';
+                return false;
+            {% endif %}
+
+            var url = '';
+            var action = $(this).data('action');
+                if (action == 'add-cart') {
+                url = '{% url "cart" %}';
+                } else if (action == 'buy-now') {
+                url = '{% url "check-out" %}';
+            }
+
+            var data = {
+                'product_id': {{ product.product_id}},
+                'type': type,
+                'quantity': quantity,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            }
+
+            $.ajax( {
+                url: url,
+                method: 'POST',
+                data: data,
+                success: function(response) {
+                    if(response.status == 'success'){
+                        $('.cart').text(response.num_cart_item)
+                        Swal.fire(
+                            'Thành công!',
+                            response.message,
+                            'success'
+                        )
+                    }
+                    else {
+                        Swal.fire(
+                            'Thất bại!',
+                            'Thêm sản phảm vào giỏ hàng thất bại!',
+                            'Error'
+                        )
+                    }
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            })
+        });
+
+        $('.buy-now').click(function() {
+            var type = $('.type-option button.active').data('type');
+            var quantity = parseInt(inputQuantity.val());
+
+            if (type == undefined) {
+                Swal.fire(
+                    'Xác nhận!',
+                    'Vui lòng chọn loại sản phẩm!',
+                    'warning'
+                )
+                return false;
+            }
+
+            {% if not user.is_authenticated %}
+            window.location.href = '/login';
+            return false;
+            {% endif %}
+            
+            var form = $('form')
+            form.find("input[name='type']").val(type);
+            form.find("input[name='quantity']").val(quantity);
+            form.submit();
+        })
+
+        $('.btn-like').click(function() {
+            console.log(1);
+            $(this).toggleClass('active');
+            $('.btn-dislike').removeClass('active');
+        })
+        $('.btn-dislike').click(function() {
+            $(this).toggleClass('active');
+            $('.btn-like').removeClass('active');
+        })
+
+        function getFeedback(page) {
+            $.ajax({
+                url: '/get-feedback',
+                method: 'get',
+                data: {
+                    'product_id': {{ product.product_id }},
+                    'page': page
+                },
+                success: function(response) {
+                    console.log(response);
+                    let feedbacks = response.results;
+                    if(feedbacks.length != 0) {
+                        let html = '';
+                        feedbacks.forEach(function(feedback) {
+                            let rating = feedback.rating;
+                            let ratingHtml = '';
+                            for (let i = 1; i <= 5; i++) {
+                                if (i <= rating) {
+                                    ratingHtml += '<i class="fa-solid fa-star"></i>';
+                                } else {
+                                    ratingHtml += '<i class="fa-regular fa-star"></i>';
+                                }
+                            }
+                            html += `
+                            <div class="product-rating__item">
+                                <div class="d-flex mt-4">
+                                    <img class="user-image-rate" src="${feedback.user_image}" alt="">
+                                    <div class="d-flex flex-column ms-3">
+                                        <div class="">${feedback.user_name}</div>
+                                        <div class="color-gray">${feedback.date}</div>
+                                        <div class="mt-1">
+                                            ${ratingHtml}
+                                        </div>
+                                        <div class=" image-feedback-list d-flex mt-3">
+                            `;
+                            feedback.images.forEach(function(image) {
+                                html += `
+                                            <div class="image-feedback-item">
+                                                <img src="${image}" alt="" width='100px'>
+                                            </div>
+                                            `
+                            })
+                             html +=`</div>
+                                        <div class="mt-3">
+                                            ${feedback.comment}
+                                        </div>
+                                        <div class="d-flex align-items-center mt-3">
+                                            <button class="btn btn-like">${feedback.like} <i class="fa-solid fa-thumbs-up active"></i></button>
+                                            <button class="btn ms-2 btn-dislike">${feedback.dislike} <i class="fa-solid fa-thumbs-down"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            `
+                        })
+                        $('.product-rating__list').html(html);
+                        var product_id = {{ product.product_id }};
+                        var currentPage = response.current_page;
+                        var totalPages = response.total_page;
+                        var previous = response.previous;
+                        var next = response.next;
+                        page = `
+                        <li class="page-item ${ previous == null ? 'disabled' : '' }">
+                            <div data-page='1' class="page-link pre-page" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </div>
+                        </li>
+                        `
+                        if (previous) {
+                        page += `
+                            <li class="page-item" aria-current="page">
+                                <div data-page='${currentPage-1}' class="page-link"'>${currentPage-1}</div>
+                            </li>
+                        `
+                        }
+                        page += `
+                            <li class="page-item active" aria-current="page">
+                                <div data-page='${currentPage}' class="page-link"'>${currentPage}</div>
+                            </li>
+                        `
+                        var next = response.next;
+                        if (next) {
+                        page += `
+                            <li class="page-item" aria-current="page">
+                                <div data-page='${currentPage+1}' class="page-link"'>${currentPage+1}</div>
+                            </li>
+                        `;
+                        }
+        
+                        page += `
+                            <li class="page-item ${ currentPage == totalPages ? 'disabled' : '' }">
+                                <div data-page='${totalPages}' class="page-link pre-page" href="#" aria-label="Previous">
+                                    <span aria-hidden="true"'>&raquo;</span>
+                                </div>
+                            </li>
+                        `
+                        $('.pagination').html(page);
+                        $('.page-link').click(function() {
+                        var page = $(this).data('page');
+                        getFeedback(page);
+    
+                        var position = $('.product-rating-overview').offset().top;
+    
+                        // Di chuyển đến vị trí đó với tốc độ 500ms
+                        $('html, body').animate({
+                        scrollTop: position
+                        }, 100);
+                        })
+                    }
+                    else {
+                        $('.pagination').html(
+                            '<div class= " h5 color-red">Chưa có đánh giá nào cho sản phẩm này</div>'
+                        );
+                    }
+    
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            })
+        }
+
+        getFeedback(1);
+
+
+    })
+</script>
+{% endblock content%}

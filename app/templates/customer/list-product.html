@@ -1,0 +1,443 @@
+{% extends 'customer/base.html' %}
+{% load my_filters %}
+{% block cdn %}
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+{% endblock cdn %}
+
+{% block content %}
+<div class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-2 p-0">
+                <div class="product-filter position-sticky">
+                    <div class="d-flex align-items-center">
+                        <i class="fa-solid fa-filter me-3 icon-filter"></i>
+                        <h3 class="m-0">Bộ lọc</h3>
+                    </div>
+                    <div class="category-filter my-4">
+                        <a class="collapse-indicator" data-bs-toggle="collapse" href="#collapseCategory" role="button" aria-expanded="true" aria-controls="collapseCategory">
+                            <div class="d-flex justify-content-between ">
+                                <h6 class="m-0">Category</h6>
+                                <i class="toggle-icon fa-solid fa-angle-down d-flex align-items-center"></i>
+                            </div>
+                        </a>
+                        <div class="collapse show mt-2 " id="collapseCategory">
+
+                            {% for category in categories %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="{{ category.category_id }}" id="category-{{ category.category_id }}" name='category'>
+                                <label class="form-check-label" for="category-{{ category.category_id }}">
+                                    {{ category.name|title }}
+                                </label>
+                            </div>
+                            {% endfor %}
+
+                        </div>
+                    </div>
+                    <div class="availabilty-filter my-4">
+                        <a class="collapse-indicator" data-bs-toggle="collapse" href="#collapseAvailability" role="button" aria-expanded="true" aria-controls="collapseAvailability">
+                            <div class="d-flex justify-content-between ">
+                                <h6 class="m-0">Trạng thái</h6>
+                                <i class="toggle-icon fa-solid fa-angle-down d-flex align-items-center"></i>
+                            </div>
+                        </a>
+                        <div class="collapse show mt-2 " id="collapseAvailability">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="instock" id="status-1" name='status' checked>
+                                <label class="form-check-label" for="status-1">
+                                    Có hàng
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="outstock" id="status-2" name='status'>
+                                <label class="form-check-label" for="status-2">
+                                    Hết hàng
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="price-filter my-4">
+                        <a class="collapse-indicator" data-bs-toggle="collapse" href="#collapsePrice" role="button" aria-expanded="true" aria-controls="collapsePrice">
+                            <div class="d-flex justify-content-between ">
+                                <h6 class="m-0">Giá</h6>
+                                <i class="toggle-icon fa-solid fa-angle-down d-flex align-items-center"></i>
+                            </div>
+                        </a>
+                        <div class="collapse show mt-2 " id="collapsePrice">
+                            <p id="amount"></p>
+                            <div id="slider-range"></div>
+                        </div>
+                    </div>
+                    <div class="rating-filter my-4">
+                        <a class="collapse-indicator" data-bs-toggle="collapse" href="#collapseRating" role="button" aria-expanded="true" aria-controls="collapseRating">
+                            <div class="d-flex justify-content-between ">
+                                <h6 class="m-0">Đánh giá</h6>
+                                <i class="toggle-icon fa-solid fa-angle-down d-flex align-items-center"></i>
+                            </div>
+                        </a>
+                        <div class="collapse show mt-2 " id="collapseRating">
+                            <div class="form-check">
+                                <input class="form-check-input" value='5' type="radio" name="rating" id="rating-1">
+                                <label class="form-check-label" for="rating-1">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" value='4' type="radio" name="rating" id="rating-2" checked>
+                                <label class="form-check-label" for="rating-2">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" value='3' type="radio" name="rating" id="rating-3" checked>
+                                <label class="form-check-label" for="rating-3">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" value='2' type="radio" name="rating" id="rating-4" checked>
+                                <label class="form-check-label" for="rating-4">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" value='1' type="radio" name="rating" id="rating-5" checked>
+                                <label class="form-check-label" for="rating-5">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                </label>
+                            </div>
+
+                            <div class='d-flex justify-content-center'>
+                                <button class='filter-btn btn btn-primary mt-4 px-4'>Lọc</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="col-10 p-0 ps-5">
+                <div class="list-product">
+                    <!-- Sort -->
+                    <div>
+                        <div class="sort-bar d-flex align-items-center">
+                            <div class='color-blue'>Sắp xếp theo</div>
+                            <div class="top_selling_products btn-filter">Phổ biến</div>
+                            <div class="best_selling_product btn-filter">Đang hot</div>
+                            <div class="top_sale_products btn-filter">Giảm nhiều</div>
+                            <div class="dropdown">
+                                <div class="btn dropdown-toggle sort-price-list" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="sort-price-choice">Giá</div>
+                                </div>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                    <li>
+                                        <div class="dropdown-item price-sort" data-sort='price_asc' href=''>Giá: từ thấp đến cao</div>
+                                    </li>
+                                    <li>
+                                        <div class="dropdown-item price-sort" data-sort='price_desc' href=''>Giá: từ cao đến thấp</div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- List product -->
+                        </div>
+                        <hr class='m-0 mb-2'>
+                        {% if search %}
+                        <div class="mb-3">Kết quả tìm kiếm cho từ khóa: <span class='color-red'>'{{search}}'</span></div>
+                        {% endif %}
+                        <div class="row g-3 list-products">
+                        </div>
+
+                    </div>
+                    <!-- Pagination -->
+                    <div class="page-controller mt-5">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item disabled">
+                                    <div class="page-link pre-page" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </div>
+                                </li>
+                                <li class="page-item active" aria-current="page">
+                                    <div class="page-link" href="#">1</div>
+                                </li>
+                                <li class="page-item">
+                                    <div class="page-link" href="#">2</div>
+                                </li>
+                                <li class="page-item">
+                                    <div class="page-link" href="#">3</div>
+                                </li>
+                                <li class="page-item">
+                                    <div class="page-link next-page" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        function formatCurrency(amount) {
+            if (amount >= 1000000) {
+                return (amount / 1000000).toLocaleString("en-US", {
+                    minimumFractionDigits: 0
+                }) + 'tr';
+            } else if (amount >= 1000) {
+                return (amount / 1000).toLocaleString("en-US", {
+                    minimumFractionDigits: 0
+                }) + 'k';
+            } else {
+                return amount.toLocaleString("en-US", {
+                    minimumFractionDigits: 0
+                });
+            }
+        }
+        var minPrice = 0;
+        var maxPrice = 1000000;
+        $("#slider-range").slider({
+            range: true,
+            min: 0,
+            max: 1000000,
+            step: 50000,
+            values: [minPrice, maxPrice],
+            slide: function(event, ui) {
+                $("#amount").html(formatCurrency(ui.values[0]) + " - " + formatCurrency(ui.values[1]));
+            }
+        });
+        $("#amount").html(formatCurrency($("#slider-range").slider("values", 0)) +
+            " - " + formatCurrency($("#slider-range").slider("values", 1)));
+
+        $('.btn-filter').click(function() {
+            $('.btn-filter').removeClass('active');
+            $(this).addClass('active');
+            $('.price-sort').removeClass('selected');
+            $('.sort-price-choice').text('Giá');
+        });
+
+        $('.price-sort').click(function() {
+            $('.btn-filter').removeClass('active');
+            var selectedValue = $(this).text();
+            $('.sort-price-choice').text(selectedValue);
+            $('.price-sort').removeClass('selected');
+            $(this).addClass('selected');
+        });
+
+        $('.page-link').click(function() {
+            $(this).addClass('selected');
+        });
+
+        // Lọc sản phẩm
+        function getListProduct() {
+            const category = $('input[name="category"]:checked').map(function() {
+                return $(this).val();
+            }).get().join(',');
+            const minPrice = $('#slider-range').slider('values', 0);
+            const maxPrice = $('#slider-range').slider('values', 1);
+            const status = $('input[name="status"]:checked').map(function() {
+                return $(this).val();
+            }).get().join(',');
+            const rating = $('input[name="rating"]:checked').val();
+            const topSale = $('.top_sale_products').hasClass('active');
+            const topSelling = $('.top_selling_products').hasClass('active');
+            const bestSelling = $('.best_selling_product').hasClass('active');
+            const sort = $('.price-sort.selected').attr('data-sort');
+            const page = $('.page-link.selected').attr('data-page');
+            data = {
+                category: category,
+                min_price: minPrice,
+                max_price: maxPrice,
+                status: status,
+                rating: rating,
+                sort: sort,
+                search: '{{search|default:""}}'
+            }
+            if (topSale) {
+                data['top_sale_products'] = topSale;
+            }
+            if (topSelling) {
+                data['top_selling_products'] = topSelling;
+            }
+            if (bestSelling) {
+                data['best_selling_product'] = bestSelling;
+            }
+            if (page) {
+                data['page'] = page;
+            }
+            return data;
+        }
+
+        function loadDataProduct() {
+            const data = getListProduct();
+            $.ajax({
+                url: 'http://127.0.0.1:8000/filter-product',
+                method: 'GET',
+                data: data,
+                success: function(response) {
+                    console.log(response);
+                    // Thêm sản phẩm vào danh sách "list-products"
+                    let productList = [];
+                    let listProduct = response.results;
+                    if(listProduct.length == 0){
+                        productList.push('<div class="d-flex justify-content-center color-red mt-4 fs-5">Không có sản phẩm nào phù hợp</div>');
+                    }
+                    else {
+                        listProduct.forEach(function(product) {
+    
+                            let price = product.price;
+                            let salePrice = product.sale;
+                            price = formatCurrency(price);
+                            salePrice = formatCurrency(salePrice);
+                            let rating = product.rating
+                            let ratingHtml = '';
+                            for (let i = 1; i <= 5; i++) {
+                                if (i <= rating) {
+                                    ratingHtml += '<i class="fa-solid fa-star"></i>';
+                                } else {
+                                    ratingHtml += '<i class="fa-regular fa-star"></i>';
+                                }
+                            }
+    
+                            let productHtml = `
+                                    <div class="col-3">
+                                        <a class="product" href="product/${product.product_id}">
+                                            <div class="product-card">
+                                                <div class="product-image">
+                                                    <img src="${product.images[0]}" alt="" class="product-img">
+                                                </div>
+                                                <div class="product-name">${product.name}</div>
+                                                <div class="product-price d-flex align-items-center">
+                                                    ${salePrice == 0 ? '' : '<div class="product-price-original">' + price + 'đ</div>'}
+                                                    <div class="product-price-sale color-red">${salePrice == 0 ? price : salePrice} đ</div>
+                                                </div>
+                                                <div class="product-rate d-flex align-items-center">
+                                                    ${ratingHtml}
+                                                    <div class="product-quantity-sold ms-2">(Đã bán ${product.total_sold})</div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    `;
+                            productList.push(productHtml);
+                        });
+                    }
+                    let productsContainer = document.querySelector(".list-products");
+                    productsContainer.innerHTML = productList.join("");
+
+                    // Thêm phân trang
+                    var currentPage = response.current_page;
+                    var totalPages = response.total_page;
+                    var pageItems = $('.page-item');
+                    var pageLinks = $('.page-link');
+                    pageItems.removeClass('active');
+
+                    var previous = response.previous;
+                    console.log(previous)
+                    var currentPage = response.current_page;
+                    var totalPages = response.total_page;
+                    var previous = response.previous;
+                    var next = response.next;
+                    page = `
+                    <li class="page-item ${ previous == null ? 'disabled' : '' }">
+                        <div data-page='1' class="page-link pre-page" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </div>
+                    </li>
+                    `
+                    if (previous) {
+                    page += `
+                    <li class="page-item" aria-current="page">
+                        <div data-page='${currentPage-1}' class="page-link"'>${currentPage-1}</div>
+                        </li>
+                    `
+                    }
+                    page += `
+                        <li class="page-item active" aria-current="page">
+                            <div data-page=' ${currentPage}' class="page-link"'>${currentPage}</div>
+                        </li>
+                    `
+                    var next = response.next;
+                    if (next) {
+                    page += `
+                        <li class="page-item" aria-current="page">
+                            <div data-page=' ${currentPage+1}' class="page-link"'>${currentPage+1}</div>
+                        </li>
+                    `;
+                    }
+    
+                    page += `
+                        <li class="page-item ${ currentPage == totalPages ? ' disabled' : '' }">
+                            <div data-page='${totalPages}' class="page-link pre-page" href="#" aria-label="Previous">
+                                <span aria-hidden="true"'>&raquo;</span>
+                            </div>
+                        </li>
+                    `
+                    $('.pagination').html(page);
+                    $('.page-link').click(function() {
+                        $('.page-link').removeClass('selected');
+                        $(this).addClass('selected');
+                        loadDataProduct();
+                    });
+                    var position = $('.list-product').offset().top - 10;
+                    var windowHeight = $(window).height();
+                    var scrollPosition = $(window).scrollTop();
+
+                    // Kiểm tra xem vị trí đó có nằm trong viewport hay không
+                    if (position > scrollPosition && position < scrollPosition + windowHeight) {
+                        // Nếu đúng, không cần di chuyển nữa
+                        return;
+                    }
+                    // Di chuyển đến vị trí đó với tốc độ 500ms
+                    $('html, body').animate({
+                        scrollTop: position
+                    }, 100);
+                },
+                error: function(error) {
+                    // Xử lý lỗi nếu có
+                    console.log(error);
+                }
+            });
+        }
+
+        $('.filter-btn, .top_sale_products, .top_selling_products, .best_selling_product, .price-sort, .page-link').click(function() {
+            loadDataProduct();
+        });
+
+        loadDataProduct();
+
+        function formatCurrency(value) {
+            return value.toLocaleString('vi', {
+                style: 'currency',
+                currency: 'VND'
+            }).replace(',', '.').replace('₫', '').trim();
+        }
+    });
+</script>
+{% endblock content %}

@@ -1,0 +1,557 @@
+{% extends 'customer/base.html' %}
+{% load humanize %}
+{% load i18n %}
+{% load l10n %}
+{% load my_filters %}
+{% block content %}
+<section class="py-4">
+    <div class="container ">
+        <h2>Giỏ hàng</h2> 
+        <div class="row">
+            <div class="col-8">
+
+                {% if cart.cartitem_set.all %}                
+                <div class="cart-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col"><input class="cart-table__select-all form-check-input" type="checkbox" value="" id="flexCheckDefault"></th>
+                                <th scope="col" style="width: 250px;">Sản phẩm</th>
+                                <th scope="col">Loại</th>
+                                <th scope="col">Số lượng</th>
+                                <th scope="col">Giá</th>
+                                <th scope="col">Thành tiền</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for item in cartitems %}
+                            <tr class="cart-table-row" data-cart-item-id='{{ item.cart_item_id }}'>
+                                <!-- viết một hàng dữ liệu sản phẩm trong giỏ hàng -->
+                                <th scope="row">
+                                    <input class="cart-table__select-item form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                                </th>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ item.product.productimage_set.first.name.url }}" alt="" class="cart-product-img" style="width: 64px;" />
+                                        <div class="cart-product-name text-container ms-2">{{ item.product.name}}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="cart-product-size">
+                                        {% if item.type == 0 %}
+                                            Sách mới
+                                        {% else %}
+                                            Sách cũ
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column position-relative">
+                                        <div class='d-flex'>
+                                            <button class="btn btn-quantity btn-minus">
+                                                <i class="fa-solid fa-minus"></i>
+                                            </button>
+                                            <input type="number" class="form-control input-quantity" min="1" value="{{ item.quantity }}">
+                                            <button class="btn btn-quantity btn-add">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </button>
+                                        </div>
+                                        <div class="message color-red position-absolute">
+                                            Số lượng không đủ
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="cart-product-price">{{item.price|floatformat:0|intcomma_dot}} đ</div>
+                                </td>
+                                <td>
+                                    <div class="cart-product-total-price">{{item.total_price|floatformat:0|intcomma_dot}} đ</div>
+                                </td>
+                                <td>
+                                    <div class="cart-product-action">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </div>
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                            <tr class="cart-table-row">
+                                <td class="fw-bold" colspan="6">Tổng tiền</td>
+                                <td class="total-price">0đ</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="modal fade" id="delete-item" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Xác nhận</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Bạn có muốn xóa sản phẩm khỏi giỏ hàng không?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Quay lại</button>
+                                    <button type="button" class="btn btn-primary btn-min-width commit-delete">Xóa</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% else %}
+                <div class="alert alert-danger mt-3 d-flex justify-content-center">Không có sản phẩm nào trong giỏ hàng</div>
+                {% endif %}
+
+            </div>
+            <div class="col-4">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4>Đặt hàng</h4>
+                        <div class="d-flex justify-content-between mt-4">
+                            <p>Số sản phẩm</p>
+                            <p class="total-quantity">0</p>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <p>Tổng tiền sản phẩm</p>
+                            <p class="total-price">0đ</p>
+                        </div>
+
+                        <div class="input-group mt-4">
+                            <input type="text" class="form-control coupon" placeholder="Voucher" name='coupon'>
+                            <button class="btn btn-light btn-coupon" style="width: 100px;">Sử dụng</button>
+                        </div>
+                        <div class="voucher-wallet d-flex justify-content-end align-items-center mt-2 pe-2 color-blue">
+                            <i class="fa-solid fa-wallet"></i>
+                            <span class="ms-2 open-popup-voucher" data-bs-toggle="modal" data-bs-target="#list-voucher" style="cursor: pointer;">Voucher của tôi</span>
+                        </div>
+                        <div class="modal fade modal-coupon" id="list-voucher" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalLabel">Mã voucher</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        {% for coupon in coupons %}
+                                            <div class="coupon-item d-flex align-items-center gap-3">
+                                                <div class="coupon-code color-red">{{coupon.code}}</div>
+                                                <div class="coupon-infor flex-grow-1">
+                                                    <div class="coupon-discount">Giảm {{ coupon.discount|floatformat:0|intcomma_dot }}đ</div>
+                                                    <div class="coupon-condition text-secondary fs-min">Đơn hàng trên {{ coupon.condition|floatformat:0|intcomma_dot }}đ</div>
+                                                    <div class="coupon-time text-secondary fs-min">HSD: {{ coupon.end_date|date:"d/m/Y" }}</div>
+                                                </div>
+                                                <div class="coupon-action" 
+                                                    data-discount="{{coupon.discount|floatformat:0}}" 
+                                                    data-condition="{{coupon.condition|floatformat:0}}" 
+                                                    data-code="{{coupon.code}}"
+                                                >
+                                                    <button class="btn btn-secondary btn-not-eligible" data-id="{{coupon.id}}" style=" cursor: not-allowed;">Chưa đủ điều kiện</button>
+                                                    <button class="btn btn-primary btn-sm btn-apply" data-id="{{coupon.id}}" style="display:none; cursor: pointer;">Áp dụng</button>
+                                                    <button type='button' class="btn btn-success btn-applied btn-sm" style="display:none; cursor: default;">Đã áp dụng</button>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="voucher-result mt-2">
+                        </div>
+
+                        <div class="total-after-voucher d-flex justify-content-between my-3 border-y border-das ">
+                            <h4>Tổng tiền</h4>
+                            <h4 class="total-money">0đ</h4>
+                        </div>
+                        <div class="payment">
+                            <button class="btn btn-primary w-100" style="height: 40px;">Thanh toán</button>
+                            <div class="payment-alert"></div>
+                        </div>
+                        <div class="form-checkout">
+   
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    $(document).ready(function() {
+        {% comment %} {% if cart.cartitem_set.all %}
+        
+        {% for item in cart.cartitem_set.all %}
+
+        var priceOfProduct = parseFloat('{{ item.product.price }}');
+        $('.cart-product-price').text(priceOfProduct + 'đ');
+
+        var quantity = parseInt('{{ item.quantity }}');
+
+        var totalPrice = priceOfProduct * quantity;
+        $('.cart-product-total-price').text(totalPrice + 'đ');
+
+        {% endfor %}
+        {% endif %} {% endcomment %}
+
+        $(".cart-table__select-all").click(function() {
+            var checkAllState = $(this).prop('checked');
+            $('.cart-table__select-item').prop('checked', checkAllState);
+            calMoney();
+        })
+
+        $(".cart-table__select-item").click(function() {
+            // kiểm tra xem có checkbox nào chưa được check không
+            var unchecked = $(".cart-table__select-item:not(:checked)").length;
+            // nếu không có checkbox nào chưa được check, check-all cũng được check
+            $(".cart-table__select-all").prop("checked", !unchecked);
+            calMoney();
+        });
+        $('.btn-add').click(function() {
+            changeQuantity.bind(this)('add')
+        });
+        $('.btn-minus').click(function() {
+            changeQuantity.bind(this)('minus')
+        });
+
+
+        $('.cart-product-action').click(function() {
+            var cartItemId = $(this).closest('tr').data('cart-item-id');
+            console.log(cartItemId);
+            $('#delete-item').modal('show');
+            {% comment %} if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?') == true) {
+                $(this).closest('.cart-table-row').remove();
+                checkNumOfItems();
+                calMoney();
+                $.ajax({
+                    data: {
+                        'cart_item_id': cartItemId,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    url: '{% url "delete-cart-item" %}',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log('Xóa thành công');
+                        
+                    },
+                    error: function(error) {
+                        alert('Có lỗi xảy ra');
+                    }
+                });
+            } {% endcomment %}
+            var cartItemId = $(this).closest('tr').data('cart-item-id');
+            $('.commit-delete').click(function() {
+                
+                $.ajax({
+                    data: {
+                        'cart_item_id': cartItemId,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    url: '{% url "delete-cart-item" %}',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log('Xóa thành công');
+                        $('#delete-item').modal('hide');
+                        $('.cart-table-row[data-cart-item-id=' + cartItemId + ']').remove();
+                        checkNumOfItems();
+                        calMoney();
+                    },
+                    error: function(error) {
+                        alert('Có lỗi xảy ra');
+                    }
+                });
+            })
+        })
+
+        $('.btn-coupon').click(function() {
+            var coupon = $('.coupon').val();
+            if (coupon == '') {
+                $('.voucher-result').html('<div class="text-danger">Vui lòng nhập mã giảm giá</div>');
+                return;
+            }
+            var total_money = $('.total-price').text().replaceAll('.', '');
+            var total_money = parseFloat(total_money);
+            $.ajax({
+                data: {
+                    'coupon': coupon,
+                    'total_money': total_money,
+                },
+                url: '{% url "check-coupon" %}',
+                type: 'GET',
+                success: function(response) {
+                    console.log(response);
+                    if (response.status == 'success') {
+                        var discount = response.discount;
+                        var condition = response.condition;
+                        $('.voucher-result').html(
+                        `<div class='d-flex justify-content-between'>
+                            <div class="">Voucher giảm</div>
+                            <div class="voucher-price color-red" data-condition="${condition}"> -${formatCurrency(discount)}</div>
+                        </div>`
+                        );
+                        calMoney();
+                        console.log('Áp dụng mã giảm giá thành công');
+                    } else {
+                        $('.voucher-result').html('<div class="text-danger">' + response.message +'</div>');
+                    }
+                },
+                error: function(error) {
+                    alert('Có lỗi xảy ra');
+                }
+            });
+        })
+
+        $('.btn-apply').click(function() {
+            var discount = $(this).parent().data('discount');
+            var condition = $(this).parent().data('condition');
+            var coupon = $(this).parent().data('code');
+            $('.modal-coupon').modal('hide');
+            $('.coupon').val(coupon);
+            $('.voucher-result').html(
+                `<div class='d-flex justify-content-between'>
+                    <div class="">Voucher giảm</div>
+                    <div class="voucher-price color-red" data-condition="${condition}"> -${formatCurrency(discount)}</div>
+                </div>`
+                );
+            calMoney();
+        })
+
+        $('.payment').click(function() {
+            var total_money = parseFloat($('.total-money').text().replaceAll('.', ''));
+            if (total_money < 0) {
+                $('.payment-alert').html('<div class="text-danger mt-3">Có lỗi xảy ra, giá tiền không được nhỏ hơn 0</div>');
+                return;
+            }
+            if($('.voucher-error').length){
+                console.log('Vui lòng nhập mã giảm giá');
+                return
+            }
+            // lấy những cart-item dược check
+            var cartItemIds = [];
+            $('.cart-table__select-item:checked').each(function() {
+                var cartItemId = $(this).closest('tr').data('cart-item-id');
+                cartItemIds.push(cartItemId);
+            });
+
+            var coupon = $('.coupon').val();
+            var discount = parseFloat($('.voucher-price').text().replaceAll('.', ''));
+            var form = $('<form></form>')
+            form.attr("method", "post");
+            form.attr("action", '{% url "check-out" %}');
+
+            cartItemIds.forEach(function(cartItemId) {
+                var field = $('<input></input>');
+                field.attr("type", "hidden");
+                field.attr("name", 'cart_item');
+                field.attr("value", cartItemId);
+                form.append(field);
+            })
+
+            var field = $('<input></input>');
+            field.attr("type", "hidden");
+            field.attr("name", 'total_money');
+            field.attr("value", total_money);
+            form.append(field);
+
+            if (coupon != '' && discount != undefined) {
+                var field = $('<input></input>');
+                field.attr("type", "hidden");
+                field.attr("name", 'coupon');
+                field.attr("value", coupon);
+                form.append(field);
+
+                var field = $('<input></input>');
+                field.attr("type", "hidden");
+                field.attr("name", 'discount');
+                field.attr("value", discount);
+                form.append(field);
+            }
+
+            var field = $('<input></input>');
+            field.attr("type", "hidden");
+            field.attr("name", 'csrfmiddlewaretoken');
+            field.attr("value", '{{ csrf_token }}');
+            form.append(field);
+            $('.form-checkout').html(form)
+            form.submit();
+            console.log(form);
+
+        }
+        )
+
+        $(document).on('change', '.input-quantity', function (){
+            var inputQuantity = $(this);
+            var price = parseFloat($(this).closest('tr').find('.cart-product-price').text().replaceAll('.', ''));
+            var quantity = parseInt(inputQuantity.val());
+
+            var cartItemId = $(this).closest('tr').data('cart-item-id');
+            data = {
+                'cart_item_id': cartItemId,
+                'quantity': quantity,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            }
+            $.ajax({
+                url: '{% url "edit-cart-item" %}',
+                type: 'POST',
+                data: data,
+                success: function(response) {
+                    if (response.status == 'success') {
+                        inputQuantity.val(quantity);
+                        inputQuantity.closest('tr').find('.cart-product-total-price').text(price * quantity + 'đ');
+                        calMoney();
+                        if (quantity == 0) {
+                        inputQuantity.closest('.cart-table-row').remove();
+                        checkNumOfItems();
+                        }
+                        inputQuantity.parent().siblings('.message').hide();
+
+                    } else {
+                        inputQuantity.parent().siblings('.message').show();
+                        setTimeout(function() {
+                            inputQuantity.siblings('.message').hide();
+                        }, 2000);
+                    }
+                },
+                error: function(error) {
+                    console.log('Có lỗi xảy ra');
+                }
+            });
+        })
+    })
+
+
+    function changeQuantity(operation) {
+        var inputQuantity = $(this).siblings('.input-quantity');
+        var price = parseFloat($(this).closest('tr').find('.cart-product-price').text().replaceAll('.', ''));
+        var quantity = parseInt(inputQuantity.val());
+        quantity = operation == 'add' ? quantity + 1 : quantity - 1;
+
+        var cartItemId = $(this).closest('tr').data('cart-item-id');
+        data = {
+            'cart_item_id': cartItemId,
+            'quantity': quantity,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        }
+        $.ajax({
+            url: '{% url "edit-cart-item" %}',
+            type: 'POST',
+            data: data,
+            success: function(response) {
+                if (response.status == 'success') {
+                    inputQuantity.val(quantity);
+                    inputQuantity.closest('tr').find('.cart-product-total-price').text(price * quantity + 'đ');
+                    calMoney();
+                    if (quantity == 0) {
+                    inputQuantity.closest('.cart-table-row').remove();
+                    checkNumOfItems();
+                    }
+                    inputQuantity.parent().siblings('.message').hide();
+
+                } else {
+                    inputQuantity.parent().siblings('.message').show();
+                    setTimeout(function() {
+                        inputQuantity.siblings('.message').hide();
+                    }, 2000);
+                }
+            },
+            error: function(error) {
+                console.log('Có lỗi xảy ra');
+            }
+        });
+    }
+
+    function calMoney() {
+        var totalQuantity = 0;
+        var totalPrice = 0;
+        var voucher = 0;
+        var totalMoney = 0;
+        $('.cart-table__select-item:checked').each(function() {
+            var quantity = parseInt($(this).closest('tr').find('.input-quantity').val());
+            var price = parseFloat($(this).closest('tr').find('.cart-product-total-price').text().replaceAll('.', ''));
+            totalQuantity += quantity;
+            totalPrice += price;
+        });
+        voucher = parseFloat($('.voucher-price').text().replaceAll('.', '')) || 0;
+        totalMoney = totalPrice;
+        totalMoney = totalMoney == 0 ? 0 : totalMoney + voucher;
+        totalMoney = totalMoney < 0 ? 0 : totalMoney;
+        // Hiển thị kết quả lên giao diện
+        $('.total-quantity').text(totalQuantity);
+        $('.total-price').text(formatCurrency(totalPrice));
+        $('.total-money').text(formatCurrency(totalMoney));
+
+        var condition = $('.voucher-price').data('condition');
+        if(condition != undefined) {
+            let voucherResult = $('.voucher-result');
+            if(totalPrice < condition) {
+                voucherResult.append(`<div class="text-danger mt-2 voucher-error">Chưa đủ điều kiện đơn hàng tối thiếu. Đơn hàng tối thiểu là ${formatCurrency(condition)}</div>`)
+            } else {
+                voucherResult.find('.voucher-error').remove();
+            }
+        }
+
+        $(document).on('click', '.open-popup-voucher', function () {
+            $('.coupon-action').each(function() {
+                var voucherCodeApplied = $('.coupon').val();
+                var discount = parseFloat($(this).data('discount'));
+                var code = $(this).data('code');
+                var condition = parseFloat($(this).data('condition'));
+
+                if (voucherCodeApplied == code) {
+                    $(this).find('.btn-applied').show();
+                    $(this).find('.btn-apply').hide();
+                    $(this).find('.btn-not-eligible').hide();
+                } else {
+                    if (totalPrice >= condition) {
+                        $(this).find('.btn-apply').show();
+                        $(this).find('.btn-not-eligible').hide();
+                        $(this).find('.btn-applied').hide();
+                    } else {
+                        $(this).find('.btn-apply').hide();
+                        $(this).find('.btn-not-eligible').show();
+                        $(this).find('.btn-applied').hide();
+                    }
+                }
+            })
+        });
+
+        $('.coupon-action').each(function() {
+            var discount = parseFloat($(this).data('discount'));
+            var condition = parseFloat($(this).data('condition'));
+            if(totalPrice >= condition) {
+                $(this).find('.btn-apply').show();
+                $(this).find('.btn-not-eligible').hide();
+            } else {
+                $(this).find('.btn-apply').hide();
+                $(this).find('.btn-not-eligible').show();
+            }
+        })
+    }
+
+    function formatCurrency(value) {
+        return value.toLocaleString('vi', {
+            style: 'currency',
+            currency: 'VND'
+            }).replace(',', '.').replace('₫', '').trim() + 'đ';
+    }
+
+    function checkNumOfItems () {
+        var numOfItems = $('.cart-table-row').length;
+        if (numOfItems == 1) {
+            var alert = '<div class="alert alert-danger mt-3 d-flex justify-content-center">Không có sản phẩm nào trong giỏ hàng</div>'
+            $('.cart-table').closest('.col-8').html(alert)
+        }
+    }
+</script>
+{% endblock content %}
