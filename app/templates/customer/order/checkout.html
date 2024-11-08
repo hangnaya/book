@@ -1,0 +1,866 @@
+{% extends 'customer/base.html' %}
+{% load humanize %}
+{% load my_filters %}
+{% block content %}
+<div class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2 class="mb-4">Thanh toán</h2>
+
+                <form action="{% url 'order' %}" class='form-order' method='post'>
+                    {% csrf_token %}
+                    {% for item in cart_items %}
+                    <input type="hidden" name="cart_item" value="{{item.cart_item_id}}" />
+                    {% endfor %}
+                    <input type="hidden" name="product_id" value="{{product.product_id}}" />
+                    <input type="hidden" name="quantity" value="{{quantity}}" />
+                    <input type="hidden" name="type" value="{{type}}" />
+
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="fa-solid fa-location-dot color-blue"></i>
+                        <p class="m-0 fs-5">Địa chỉ nhận hàng</p>
+                        <button type="button" class="btn btn-light change-address" data-bs-toggle="modal" data-bs-target="#modal-address">
+                            Thay đổi
+                        </button>
+                        <div class="modal fade" id="modal-address" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalToggleLabel">Địa chỉ nhận hàng</h1>
+                                        <button type='button' class="btn btn-primary ms-2" data-bs-target="#modal-add-address" data-bs-toggle="modal">Thêm</button>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body address-options">
+                                        <p class="text-danger d-none address-error"></p>
+                                        {% for address_option in user.addressshipping_set.all %}
+                                        <div class="form-check mb-3" id="address_shipping_{{ address_option.address_shipping_id }}">
+                                            <input  {% if forloop.first %}checked{% endif %} class="form-check-input" type="radio" name="address" id="address-{{address_option.address_shipping_id}}">
+                                            <label class="form-check-label ms-3" style='width: 700px;' for="address-{{address_option.address_shipping_id}}">
+                                                <div class='row'>
+                                                    <div class="d-flex align-items-center gap-3 col-3">
+                                                        Tên
+                                                    </div>
+                                                    <div class="d-flex col-8 receiver">{{address_option.receiver}}</div>
+                                                </div>
+                                                <div class='row'>
+                                                    <div class="d-flex gap-3 col-3">
+                                                        Địa chỉ
+                                                    </div>
+                                                    <div class="d-flex col-8 address">{{address_option.address}}</div>
+                                                </div>
+                                                <div class='row'>
+                                                    <div class="d-flex gap-3 col-3">
+                                                        Số điện thoại
+                                                    </div>
+                                                    <div class="d-flex col-8 phone">{{address_option.phone}}</div>
+                                                </div>
+                                            </label>
+                                            <button type='button' id="btn-edit-address-{{address_option.address_shipping_id}}" data-receiver="{{address_option.receiver}}" data-id="{{address_option.address_shipping_id}}" 
+                                                data-address="{{address_option.address}}" data-phone="{{address_option.phone}}" 
+                                                class="btn btn-warning ms-2 btn-edit-address">Sửa</button>
+                                            <button type='button' data-id="{{address_option.address_shipping_id}}"
+                                                class="btn btn-danger ms-2 btn-delete-address">Xóa</button>
+                                            <hr>
+                                        </div>
+                                        {% endfor %}
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type='button' class='btn btn-primary btn-select-address'>Chọn</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal fade" id="modal-add-address" aria-hidden="true" aria-labelledby="exampleModalToggleLabel2" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalToggleLabel2">Thêm địa chỉ nhận hàng</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="address-form">
+                                            <div class="mb-3">
+                                                <label for="" class="form-label">Người nhận</label>
+                                                <input type="text" class="form-control" name="receiver" id="add-name" aria-describedby="helpId" placeholder="">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="" class="form-label">Địa chỉ</label>
+                                                <input type="text" class="form-control" name="address" id="add-address" aria-describedby="helpId" placeholder="">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="" class="form-label">Số điện thoại</label>
+                                                <input type="text" class="form-control" name="phone" id="add-phone" aria-describedby="helpId" placeholder="Nhập số điện thoại" required>
+                                                <div id="error-phone" class="form-text text-danger d-none">Vui lòng nhập số điện thoại hợp lệ.</div>
+                                            </div>
+                                            <div class='d-flex justify-content-end gap-2'>
+                                                <button type='button' class='btn btn-primary btn-add-address'>Thêm</button>
+                                                <button type='button' class="btn btn-secondary" data-bs-target="#modal-address" data-bs-toggle="modal">Quay lại</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal fade" id="modal-edit-address" aria-hidden="true" aria-labelledby="exampleModalToggleLabel2" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalToggleLabel2">Cập nhật địa chỉ nhận hàng</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="address-edit-form">
+                                            <div class="mb-3">
+                                                <label for="" class="form-label">Người nhận</label>
+                                                <input type="text" class="form-control" name="receiver" id="add-name" aria-describedby="helpId" placeholder="">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="" class="form-label">Địa chỉ</label>
+                                                <input type="text" class="form-control" name="address" id="add-address" aria-describedby="helpId" placeholder="">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="" class="form-label">Số điện thoại</label>
+                                                <input type="text" class="form-control" name="phone" id="add-phone" aria-describedby="helpId" placeholder="Nhập số điện thoại" required>
+                                                <div id="error-phone-edit" class="form-text text-danger d-none">Vui lòng nhập số điện thoại hợp lệ.</div>
+                                            </div>
+                                            <div class='d-flex justify-content-end gap-2'>
+                                                <input type="hidden" name="address_shipping_id" id="address_id">
+                                                <button type='button' class='btn btn-primary btn-update-address'>Cập nhật</button>
+                                                <button type='button' class="btn btn-secondary" data-bs-target="#modal-address" data-bs-toggle="modal">Quay lại</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="address-infor my-3">
+                        <table class="table table-borderless">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fa-solid fa-user m-0 color-blue"></i>
+                                            Tên
+                                        </div>
+                                    </td>
+                                    <td>:</td>
+                                    <td class="d-flex receiver">{{user.addressshipping_set.first.receiver}}</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fa-solid fa-house color-blue"></i>
+                                            Địa chỉ
+                                        </div>
+                                    </td>
+                                    <td>:</td>
+                                    <td class="d-flex address">{{user.addressshipping_set.first.address}}</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fa-solid fa-phone color-blue"></i>
+                                            Số điện thoại
+                                        </div>
+                                    </td>
+                                    <td>:</td>
+                                    <td class="d-flex phone">{{user.addressshipping_set.first.phone}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="ship">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-truck color-blue"></i>
+                            <p class="fs-5 m-0">Vận chuyển</p>
+                        </div>
+                        <div class="mt-3">
+                            <div class="ship-method row my-3">
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="shipmethod" value='Vận chuyển thường' id="flexRadioDefault1" data-ship-method='normal' checked>
+                                        <label class="form-check-label" for="flexRadioDefault1">
+                                            Vận chuyển thường
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="shipmethod" value='Vận chuyển nhanh' id="flexRadioDefault2" data-ship-method='express'>
+                                        <label class="form-check-label" for="flexRadioDefault2">
+                                            Vận chuyển nhanh
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <div class="row my-3">
+                                    <div class="col-3">
+                                        <div class="d-flex">Phí vận chuyển</div>
+                                    </div>
+                                    <div class="col-1">:</div>
+                                    <div class="col-7 ship-price">30.000 đ</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-3">
+
+                    <div class="voucher">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-gift color-blue"></i>
+                            <p class="fs-5 m-0">Voucher</p>
+                            <!-- Button trigger modal -->
+                            <button type="button" class="btn btn-light change-coupon" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                Đổi mã
+                            </button>
+
+                            <!-- Modal -->
+                            <div class="modal fade modal-coupon" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5" id="exampleModalLabel">Mã giảm giá</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+
+                                            <div class="input-group mb-3">
+                                                <input type="text" class="form-control coupon" placeholder="Voucher" name='coupon'>
+                                                <button type='button' class="btn btn-light btn-coupon" style="width: 100px;">Apply</button>
+                                            </div>
+                                            <div class="voucher-result"></div>
+                                            
+                                            {% for coupon in coupons %}
+                                            <div class="coupon-item d-flex align-items-center gap-3 mt-2">
+                                                <div class="code color-red">{{coupon.code}}</div>
+                                                <div class="coupon-infor flex-grow-1">
+                                                    <div class="coupon-discount">Giảm {{ coupon.discount|floatformat:0|intcomma_dot }}đ</div>
+                                                    <div class="coupon-condition text-secondary fs-min">Đơn hàng trên {{ coupon.condition|floatformat:0|intcomma_dot }}đ</div>
+                                                    <div class="coupon-time text-secondary fs-min">HSD: {{ coupon.end_date|date:"d/m/Y" }}</div>
+                                                </div>
+                                                <div class="coupon-action" data-discount="{{coupon.discount|floatformat:0}}" data-condition="{{coupon.condition|floatformat:0}}" data-code="{{coupon.code}}">
+                                                    <button type='button' class="btn btn-secondary btn-not-eligible" data-id="{{coupon.id}}" style=" cursor: not-allowed;">Chưa đủ điều kiện</button>
+                                                    <button type='button' class="btn btn-primary btn-sm btn-apply" data-id="{{coupon.id}}" style="display:none; cursor: pointer;">Áp dụng</button>
+                                                    <button type='button' class="btn btn-success btn-applied btn-sm" style="display:none; cursor: default;">Đã áp dụng</button>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2 coupon-detail">
+                            <table class="table table-borderless">
+                                <tbody>
+                                    <div class="row my-3">
+                                        <div class="col-3">
+                                            <div class="d-flex">Mã Voucher</div>
+                                        </div>
+                                        <div class="col-1">:</div>
+                                        <div class="col-7 coupon-code">{{coupon|default:"Chưa sử dụng mã"}}</div>
+                                    </div>
+                                    <div class="row my-3">
+                                        <div class="col-3">
+                                            <div class="d-flex">Giảm giá</div>
+                                        </div>
+                                        <div class="col-1">:</div>
+                                        <div class="col-7 discount color-red">{{discount|default:0}} đ</div>
+                                    </div>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="payment">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-money-check color-blue"></i>
+                            <p class="fs-5 m-0">Phương thức thanh toán</p>
+                        </div>
+                        <div class="mt-3">
+                            <div class="ship-method row my-3">
+                                <div class="col-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" value='Tiền mặt' id="payment-cash" checked>
+                                        <label class="form-check-label" for="payment-cash">
+                                            Tiền mặt
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" value='Thẻ tín dụng' id="payment-card">
+                                        <label class="form-check-label" for="payment-card">
+                                            Thẻ tín dụng
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" value='Zalo Pay' id="payment-e-wallet">
+                                        <label class="form-check-label" for="payment-e-wallet">
+                                            Ví điện tử
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class='my-3'>
+                    <input type="hidden" name="receiver" />
+                    <input type="hidden" name="address" />
+                    <input type="hidden" name="phone" />
+                    <input type="hidden" name="discount" />
+                    <input type="hidden" name="shipping" />
+                    <input type="hidden" name="total" />
+                    <input type="hidden" name="coupon" value='{{coupon}}' />
+
+                    <div class="note">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-notes"></i>
+                            <p class="fs-5 m-0">Ghi chú</p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="note" class="form-label"></label>
+                            <textarea class="form-control" name="note" id="note" rows="5"></textarea>
+                        </div>
+                    </div>
+
+                    <div class='message'>
+                        {% comment %} {% if order_form.errors %}
+                        <div class="alert alert-danger">
+                            {{ order_form.errors }}
+                        </div>
+                        {% endif %} {% endcomment %}
+                    </div>
+                    <div class="order btn btn-primary w-100 my-5 d-flex align-items-center justify-content-center" style="height: 40px;">Đặt hàng</div>
+                </form>
+            </div>
+            <div class="col-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Đơn hàng</h5>
+                        <div class="list-order-item mt-3">
+                            {% if cart_items %}
+                            {% for item in cart_items %}
+                            <div class="order-item row d-flex align-items-center my-2">
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{item.product.productimage_set.first.name.url}}" alt="" style="width: 40px;height: 40px;">
+                                        <div class="order-item-name text-container ms-2">{{item.product.name}}</div>
+                                    </div>
+                                </div>
+                                <div class="col-2 d-flex justify-content-center quantity">x {{item.quantity}}</div>
+                                <div class="col-4 d-flex flex-row-reverse price-item">{{item.price|floatformat:0}}</div>
+                            </div>
+                            {% endfor %}
+
+                            {% else %}
+                            <div class="order-item row d-flex align-items-center my-2">
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{product.productimage_set.first.name.url}}" alt="" style="width: 40px;height: 40px;">
+                                        <div class="order-item-name text-container ms-2">{{product.name}}</div>
+                                    </div>
+                                </div>
+                                <div class="col-2 d-flex justify-content-center quantity">x {{quantity}}</div>
+                                <div class="col-4 d-flex flex-row-reverse price-item">{{product.curr_price|floatformat:0}}</div>
+                            </div>
+                            {% endif %}
+
+                        </div>
+
+                        <div class="order-infor-money">
+                            <div class="row my-2 pt-2">
+                                <div class="col-8">Tổng giá</div>
+                                <div class="col-4 d-flex flex-row-reverse total-money">{{total}}</div>
+                            </div>
+                            <div class="row my-2">
+                                <div class="col-8">Voucher</div>
+                                <div class="col-4 d-flex flex-row-reverse color-red discount">{{ discount|default:0}} đ</div>
+                            </div>
+                            <div class="row my-2">
+                                <div class="col-8">Phí vận chuyển</div>
+                                <div class="col-4 d-flex flex-row-reverse ship-price">30.000 đ</div>
+                            </div>
+                        </div>
+                        <div class="row my-2 fs-5">
+                            <div class="col-9">Tổng tiền</div>
+                            <div class="col-3 d-flex flex-row-reverse total total-price">{{ total }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('.btn-select-address').click(function() {
+            var isChecked = $('input[type="radio"][name="address"]').is(':checked');
+            if (!isChecked) {
+                $('.address-error').html('Vui lòng chọn địa chỉ giao hàng');
+                $('.address-error').removeClass('d-none');
+            } else {
+                $('.address-error').html('');
+                $('.address-error').addClass('d-none');
+                $('#modal-address').modal('hide');
+                var t = $('input[type="radio"][name="address"]')
+                console.log(t);
+                $('input[type="radio"][name="address"]').each(function() {
+                    if ($(this).is(':checked')) {
+                        var receiver = $(this).parent().find('.receiver').text();
+                        var address = $(this).parent().find('.address').text();
+                        var phone = $(this).parent().find('.phone').text();
+                        $('.address-infor .receiver').text(receiver);
+                        $('.address-infor .address').text(address);
+                        $('.address-infor .phone').text(phone);
+                    }
+                })
+            }
+        })
+
+        $('#modal-address').on('hidden.bs.modal', function () {
+            $('.address-error').html('');
+            $('.address-error').addClass('d-none');
+        });
+
+        $('#add-phone').on('change', function() {
+            var phone = $(this).val();
+            var phonePattern = /^[0-9]{10}$/;
+            if (!phonePattern.test(phone)) {
+                $('#error-phone').removeClass('d-none');
+            } else {
+                $('#error-phone').addClass('d-none');
+            }
+        })
+
+        $(document).on('click', '.btn-update-address', function() {
+            var receiver = $('.address-edit-form input[name="receiver"]').val();
+            var address = $('.address-edit-form input[name="address"]').val();
+            var phone = $('.address-edit-form input[name="phone"]').val();
+            var address_shipping_id = $('.address-edit-form #address_id').val();
+            var phonePattern = /^[0-9]{10}$/;
+            if (!phonePattern.test(phone)) {
+                $('#error-phone-edit').removeClass('d-none');
+            } else {
+                $('#error-phone-edit').addClass('d-none');
+                data = {
+                    'receiver': receiver,
+                    'address': address,
+                    'phone': phone,
+                    'address_shipping_id': address_shipping_id,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                }
+    
+                $.ajax({
+                    data: data,
+                    url: '{% url "edit-address" %}',
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.status == 'success') {
+                            $('#modal-edit-address').modal('hide');
+                            $('#modal-address').modal('show');
+                            Swal.fire(
+                                'Thành công!',
+                                'Cập nhật địa chỉ thành công!',
+                                'success'
+                            )
+                            var result = response.result;
+                            $(`#address_shipping_${result.id} .receiver`).text(result.receiver);
+                            $(`#address_shipping_${result.id} .address`).text(result.address);
+                            $(`#address_shipping_${result.id} .phone`).text(result.phone);
+
+                            $(`#btn-edit-address-${result.id}`).data('receiver', result.receiver);
+                            $(`#btn-edit-address-${result.id}`).data('address', result.address);
+                            $(`#btn-edit-address-${result.id}`).data('phone', result.phone);
+
+                            $('input[type="radio"][name="address"]').each(function() {
+                                if ($(this).is(':checked')) {
+                                    var receiver = $(this).parent().find('.receiver').text();
+                                    var address = $(this).parent().find('.address').text();
+                                    var phone = $(this).parent().find('.phone').text();
+                                    $('.address-infor .receiver').text(receiver);
+                                    $('.address-infor .address').text(address);
+                                    $('.address-infor .phone').text(phone);
+                                }
+                            })
+                        } else {
+                            Swal.fire(
+                                'Thất bại!',
+                                'Cập nhật địa chỉ thất bại!',
+                                'error'
+                            )
+                        }
+                    },
+                    error: function(error) {
+                        Swal.fire(
+                            'Thất bại!',
+                            'Có lỗi xảy ra!',
+                            'error'
+                        )
+                    }
+                });
+            }
+
+        })
+        $('.btn-add-address').click(function() {
+            var receiver = $('.address-form input[name="receiver"]').val();
+            var address = $('.address-form input[name="address"]').val();
+            var phone = $('.address-form input[name="phone"]').val();
+            var phonePattern = /^[0-9]{10}$/;
+            if (!phonePattern.test(phone)) {
+                $('#error-phone').removeClass('d-none');
+            } else {
+                $('#error-phone').addClass('d-none');
+                data = {
+                    'receiver': receiver,
+                    'address': address,
+                    'phone': phone,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                }
+    
+                $.ajax({
+                    data: data,
+                    url: '{% url "add-address" %}',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log(response);
+    
+                        if (response.status == 'success') {
+                            $('#modal-add-address').modal('hide');
+                            $('#modal-address').modal('show');
+                            var result = response.result;
+                            $('.address-options').append(`
+                                <div class="form-check mb-3"  id="address_shipping_${result.id}">
+                                    <input class="form-check-input" type="radio" name="address" id="address-${result.id}">
+                                    <label class="form-check-label ms-3" style='width: 700px;' for="address-${result.id}">
+                                        <div class='row'>
+                                            <div class="d-flex align-items-center gap-3 col-3">
+                                                Tên
+                                            </div>
+                                            <div class="d-flex col-8 receiver">${result.receiver}</div>
+                                        </div>
+                                        <div class='row'>
+                                            <div class="d-flex gap-3 col-3">
+                                                Địa chỉ
+                                            </div>
+                                            <div class="d-flex col-8 address">${result.address}</div>
+                                        </div>
+                                        <div class='row'>
+                                            <div class="d-flex gap-3 col-3">
+                                                Số điện thoại
+                                            </div>
+                                            <div class="d-flex col-8 phone">${result.phone}</div>
+                                        </div>
+                                    </label>
+                                    <button type='button' id="btn-edit-address-${result.id}" data-receiver="${result.receiver}" data-id="${result.id}" 
+                                        data-address="${result.address}" data-phone="${result.phone}" 
+                                        class="btn btn-warning ms-2 btn-edit-address">Sửa</button>
+                                    <button type='button' data-id="${result.id}"
+                                            class="btn btn-danger ms-2 btn-delete-address">Xóa</button>
+                                    <hr>
+                                </div>
+                            `)
+                        } else {
+                            alert('Có lỗi xảy ra');
+                        }
+                    },
+                    error: function(error) {
+                        alert('Có lỗi xảy ra');
+                    }
+                });
+            }
+
+        })
+
+        $(document).on('click', '.btn-edit-address', function(){
+            const receiver = $(this).data('receiver');
+            const address = $(this).data('address');
+            const phone = $(this).data('phone');
+            const address_shipping_id = $(this).data('id');
+            if (receiver && address && phone && address_shipping_id) {
+                $('#modal-edit-address #add-name').val(receiver);
+                $('#modal-edit-address #add-address').val(address);
+                $('#modal-edit-address #add-phone').val(phone);
+                $('#modal-edit-address #address_id').val(address_shipping_id);
+                $('#modal-edit-address').modal('show');
+            }
+        })
+
+        $(document).on('click', '.btn-delete-address', function(){
+            const address_shipping_id = $(this).data('id');
+            if (address_shipping_id) {
+                $.ajax({
+                    data: {
+                        'address_shipping_id': address_shipping_id,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    url: '{% url "delete-address" %}',
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            if (response.id) {
+                                $('#address_shipping_' + response.id).remove();
+                                var isChecked = $('input[type="radio"][name="address"]').is(':checked');
+                                if (!isChecked) {
+                                    $('.address-infor .receiver').text('');
+                                    $('.address-infor .address').text('');
+                                    $('.address-infor .phone').text('');
+                                }
+                            }
+                            Swal.fire(
+                                'Thành công!',
+                                'Xóa địa chỉ thành công!',
+                                'success'
+                            )
+
+                        } else {
+                            Swal.fire(
+                                'Thất bại!',
+                                'Xóa địa chỉ thất bại!',
+                                'error'
+                            )
+                        }
+                    },
+                    error: function(error) {
+                        alert('Có lỗi xảy ra');
+                    }
+                }); 
+            }
+        })
+
+        $('.btn-coupon').click(function() {
+            var coupon = $('.coupon').val();
+            if (coupon == '') {
+                $('.voucher-result').html('<div class="text-danger">Vui lòng nhập mã giảm giá</div>');
+                return;
+            }
+            var total_money = parseFloat($('.total-money').text().replaceAll('.', ''));
+            $.ajax({
+                data: {
+                    'coupon': coupon,
+                    'total_money': total_money,
+                },
+                url: '{% url "check-coupon" %}',
+                type: 'GET',
+                success: function(response) {
+                    console.log(response);
+                    if (response.status == 'success') {
+                        $('.modal-coupon').modal('hide');
+                        $('.coupon-code').text(coupon);
+                        var discount = parseFloat(response.discount);
+                        var discount = discount.toLocaleString('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND'
+                        }).replace('₫', '');
+                        $('.discount').html('<div class="voucher-price color-red"> -' + discount + 'đ</div>');
+                        $('.coupon').val('');
+                        calMoney();
+                    } else {
+                        $('.voucher-result').html('<div class="text-danger">' + response.message + '</div>');
+                    }
+                },
+                error: function(error) {
+                    alert('Có lỗi xảy ra');
+                }
+            });
+        })
+
+        $('.coupon-action').each(function() {
+            var discount = parseFloat($(this).data('discount'));
+            var condition = parseFloat($(this).data('condition'));
+            var totalPrice = parseFloat($('.total-money').text().replaceAll('.', '').replace('đ', ''));
+
+            if (totalPrice >= condition) {
+                $(this).find('.btn-apply').show();
+                $(this).find('.btn-not-eligible').hide();
+            } else {
+                $(this).find('.btn-apply').hide();
+                $(this).find('.btn-not-eligible').show();
+            }
+        })
+
+        $('.btn-apply').click(function() {
+            var discount = $(this).parent().data('discount');
+            var condition = $(this).parent().data('condition');
+            var coupon = $(this).parent().data('code');
+            $('.modal-coupon').modal('hide');
+            $('.discount').html('<div class="voucher-price color-red"> -' + formatCurrency(discount) + '</div>');
+            $('.coupon-code').text(coupon);
+            calMoney();
+        })
+
+        $('input[type="radio"][name="shipmethod"]').change(function() {
+            var ship_method = $(this).data('ship-method') == 'normal' ? 30000 : 50000;
+            var ship_method = ship_method.toLocaleString('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).replace('₫', '');
+            $('.ship-price').text(ship_method + 'đ');
+            calMoney();
+        });
+
+        function calculateTotalFirstLoad() {
+            var totalPrice = 0;
+            var voucher = 0;
+            var totaMoney = 0;
+            $('.order-item').each(function() {
+                var quantity = parseInt($(this).find('.quantity').text().replace('x', ''));
+                var price = parseFloat($(this).find('.price-item').text().replaceAll('.', '').replace('đ', ''));
+                $(this).find('.price-item').text(price.toLocaleString('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                }).replace('₫', 'đ'));
+                
+                console.warn("quantity", quantity, price);
+                
+                totalPrice += quantity * price;
+            });
+            $('.total-money').text(totalPrice.toLocaleString('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).replace('₫', 'đ'));
+
+
+            voucher = parseFloat($('.order-infor-money .discount').text().replaceAll('.', '')) || 0;
+            var ship_price = parseFloat($('.order-infor-money .ship-price').text().replaceAll('.', '').replace('đ', ''));
+
+            const totalPriceNotFeeShip = totalPrice + voucher;
+            totaMoney = totalPriceNotFeeShip < 0 ? ship_price : (totalPriceNotFeeShip + ship_price);
+
+            $('.total').text(totaMoney.toLocaleString('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).replace('₫', 'đ'));
+        }
+
+        calculateTotalFirstLoad();
+
+        $('.order').click(function() {
+
+            var form = $('.form-order');
+            var address = $('.address-infor .address').text()
+            var receiver = $('.address-infor .receiver').text()
+            var phone = $('.address-infor .phone').text()
+
+            if (address == '' || receiver == '' || phone == '') {
+                $('.message').html('<div class="alert alert-danger">Vui lòng chọn địa chỉ nhận hàng</div>');
+                return;
+            }
+            $('input[name="receiver"]').val(receiver);
+
+            $('input[name="address"]').val(address);
+
+            $('input[name="phone"]').val(phone);
+
+            var discount = parseFloat($('.discount').text().replaceAll('.', '').replace('đ', '')) || 0;
+            $('input[name="discount"]').val(discount);
+
+            var ship_price = parseFloat($('.ship-price').text().replaceAll('.', '').replace('đ', ''));
+            $('input[name="shipping"]').val(ship_price);
+
+            var total = parseFloat($('.total').text().replaceAll('.', '').replace('đ', '').trim());
+            $('input[name="total"]').val(total);
+
+            $('input[name="coupon"]').val($('.coupon-code').text() || '');
+            console.log(form[0]);
+            form.submit();
+        })
+
+        $(document).on('click', '.change-coupon', function () {
+            
+
+            $('.coupon-action').each(function() {
+                var voucherCodeApplied = $('.coupon-code').text();
+                var discount = parseFloat($(this).data('discount'));
+                var code = $(this).data('code');
+                var condition = parseFloat($(this).data('condition'));
+                var totalPrice = parseFloat($('.total-money').text().replaceAll('.', '').replace('đ', ''));
+
+                if (voucherCodeApplied == code) {
+                    $(this).find('.btn-applied').show();
+                    $(this).find('.btn-apply').hide();
+                    $(this).find('.btn-not-eligible').hide();
+                } else {
+                    if (totalPrice >= condition) {
+                        $(this).find('.btn-apply').show();
+                        $(this).find('.btn-not-eligible').hide();
+                        $(this).find('.btn-applied').hide();
+                    } else {
+                        $(this).find('.btn-apply').hide();
+                        $(this).find('.btn-not-eligible').show();
+                        $(this).find('.btn-applied').hide();
+                    }
+                }
+            })
+        });
+
+        $('#exampleModal').on('hidden.bs.modal', function (e) {
+            $('.voucher-result').html('');
+        });
+
+        $('#modal-add-address').on('hidden.bs.modal', function (e) {
+            $(this).find('input[type="text"], input[type="number"], textarea').val('');
+        });
+    });
+
+    function calMoney() {
+        var totalPrice = 0;
+        var voucher = 0;
+        var totaMoney = 0;
+        $('.order-item').each(function() {
+            var quantity = parseInt($(this).find('.quantity').text().replace('x', ''));
+            var price = parseFloat($(this).find('.price-item').text().replaceAll('.', '').replace('đ', ''));
+            $(this).find('.price-item').text(price.toLocaleString('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).replace('₫', 'đ'));
+            totalPrice += quantity * price;
+        });
+        $('.total-money').text(totalPrice.toLocaleString('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).replace('₫', 'đ'));
+
+
+        voucher = parseFloat($('.order-infor-money .discount').text().replaceAll('.', '')) || 0;
+        var ship_price = parseFloat($('.order-infor-money .ship-price').text().replaceAll('.', '').replace('đ', ''));
+
+        
+        const totalPriceNotFeeShip = totalPrice + voucher;
+        totaMoney = totalPriceNotFeeShip < 0 ? ship_price : (totalPriceNotFeeShip + ship_price);
+
+        $('.total').text(totaMoney.toLocaleString('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).replace('₫', 'đ'));
+
+    }
+
+    function formatCurrency(value) {
+        return value.toLocaleString('vi', {
+            style: 'currency',
+            currency: 'VND'
+        }).replace(',', '.').replace('₫', 'đ');
+    }
+</script>
+
+{% endblock content %}

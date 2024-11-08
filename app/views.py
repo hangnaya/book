@@ -358,6 +358,67 @@ def check_coupon(request):
     return JsonResponse({'status': 'success', 'discount': coupon.discount, 'condition': coupon.condition})
 
 
+def checkout(request):
+    if request.method == 'GET':
+        return render(request, 'customer/order/checkout.html')
+
+    cart_items = request.POST.getlist('cart_item')
+    cart_items = [int(cart_item) for cart_item in cart_items]
+
+    total = request.POST.get('total_money')
+    coupon = request.POST.get('coupon')
+    discount = request.POST.get('discount')
+
+    cart_items = CartItem.objects.filter(pk__in=cart_items).annotate(
+        price=Case(
+            When(product__sale__gte=0, then=F('product__sale')),
+            default=F('product__price'),
+            output_field=FloatField()
+        ),
+    ).distinct()
+    locale.setlocale(locale.LC_ALL, 'vi_VN.UTF-8')
+    total = locale.format_string('%dđ', int(total), grouping=True).replace(',', '.')
+    coupons = Coupon.objects.filter(start_date__lte=timezone.now(), end_date__gte=timezone.now()).order_by('discount')
+    context = {
+        'cart_items': cart_items,
+        'total': total,
+        'coupon': coupon,
+        'discount': discount,
+        'coupons': coupons
+    }
+    return render(request, 'customer/order/checkout.html', context)
+
+
+def buy_now(request):
+    if request.method == 'POST':
+        product_id = request.POST.get('product_id')
+        product = Product.objects.filter(pk=product_id).annotate(
+            curr_price=Case(When(sale__gte=0, then=F('sale')),
+                default=F('price')),
+            rating=Avg('feedback__rating'),
+        ).first()
+
+        type = request.POST.get('type')
+        quantity = request.POST.get('quantity')
+        quantity = int(quantity)
+
+        product_detail = ProductDetail.objects.filter(product=product, type=type).first()
+        if quantity > product_detail.quantity:
+            return JsonResponse({'status': 'error', 'message': 'Số lượng sản phẩm không đủ'})
+        total = product.curr_price * quantity
+        locale.setlocale(locale.LC_ALL, 'vi_VN.UTF-8')
+        total = locale.format_string('%dđ', int(total), grouping=True).replace(',', '.')
+        coupons = Coupon.objects.filter(start_date__lte=timezone.now(), end_date__gte=timezone.now()).order_by('discount')
+
+        context = {
+            'product': product,
+            'type': type,
+            'quantity': quantity,
+            'total': total,
+            'coupons': coupons
+        }
+        return render(request, 'customer/order/checkout.html', context)
+
 
 def add_address(request):
     if request.method == 'POST':

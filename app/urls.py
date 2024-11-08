@@ -13,6 +13,8 @@ urlpatterns = [
     path('edit-cart-item', views.edit_cart_item, name='edit-cart-item'),
     path('delete-cart-item', views.delete_cart_item, name='delete-cart-item'),
     path('check-coupon', views.check_coupon, name='check-coupon'),
+    path('checkout', views.checkout, name='check-out'),
+    path('buynow', views.buy_now, name='buy-now'),
 
     # address shipping
     path('add-address', views.add_address, name='add-address'),
