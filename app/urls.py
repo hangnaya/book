@@ -18,6 +18,8 @@ urlpatterns = [
     path('get-order', views.get_order, name='get_order'),
     path('order-detail', views.get_order_detail, name='order-detail'),
     path('cancel-order', views.cancel_order, name='cancel-order'),
+    path('list-post', views.getPost, name='list-post'),
+    path('post/<int:post_id>', views.postDetail, name='post-detail'),
 
     # address shipping
     path('add-address', views.add_address, name='add-address'),

@@ -1,0 +1,63 @@
+{% extends 'customer/base.html' %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<div class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Content -->
+            <div class="col-12 p-0 ps-5">
+                <div class="list-product">
+                    <div class="content-post">
+                        <h3 class="title">{{ post.title }}</h3>
+                        <div class="d-flex align-items-center">
+                            <p class="author"><span>Tác giả: </span>{{ post.author_name }}</p>
+                            <i class="fas fa-circle"></i>
+                            <p class="date"><span>Ngày đăng: </span>{{ post.time_created | date:"d/m/Y"}}</p>
+                            <i class="fas fa-circle"></i>
+                            <p class="date"><span>Danh mục: </span>{{ post.category.name }}</p>
+                        </div>
+                        <div class="content">
+                            {{ post.content | safe }}
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="other-post">
+                        <h3 class="title">Các bài viết cùng danh mục</h3>
+                        <ul id="lightSlider">
+                            {% for other_post in other_posts %}
+                                <li>
+                                    <a class="product" href="{% url 'post-detail' other_post.post_id %}">
+                                        <div class="product-card">
+                                            <div class="product-image">
+                                                <img src="{% static 'img/news.png' %}" alt="" class="product-img">
+                                            </div>
+                                            <div class="post-title">{{other_post.title}}</div>
+                                            <div class="post-author">
+                                                <span>Tác giả: </span>{{other_post.author_name}}
+                                            </div>
+                                            <div class="post-time">
+                                                <span>Ngày: </span>{{other_post.time_created | date:"d/m/Y"}}
+                                            </div>
+                                        </div>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#lightSlider").lightSlider({
+            item: 4,
+            loop: true,
+            slideMargin: 40,
+        });
+    });
+</script>
+
+{% endblock content %}

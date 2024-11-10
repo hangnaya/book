@@ -620,6 +620,35 @@ def cancel_order(request):
     return render(request, 'customer/order_detail.html', context)
 
 
+
+def getPost(request):
+    categories = CategoryPost.objects.filter(is_active = 1)
+    keyword = request.GET.get('keyword', '')
+    posts = Post.objects.filter(title__icontains=keyword, is_active = 1).order_by('-post_id')
+    category = request.GET.get('category', '')
+    if category:
+        posts = posts.filter(category__name=category)
+    paginator = Paginator(posts, 12)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    context = {
+        'categories': categories,
+        'keyword': keyword,
+        'page_obj': page_obj,
+        'category': category,
+    }
+    return render(request, 'customer/list-post.html', context)
+
+def postDetail(request, post_id):
+    post = get_object_or_404(Post, post_id=post_id)
+    post.views += 1
+    post.save()
+    other_posts = Post.objects.filter(category_id=post.category_id).exclude(post_id=post.post_id)[:5]
+
+    return render(request, 'customer/post-detail.html', {
+        'post': post,
+        'other_posts': other_posts,
+    })
 def updateStatus(request):
     user_id = int(request.POST.get('user_id'))
     is_active = int(request.POST.get('is_active'))
