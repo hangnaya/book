@@ -477,6 +477,148 @@ def delete_address(request):
         })
 
 
+def order(request):
+    if request.method == 'POST':
+        coupon = request.POST.get('coupon')
+        discount = request.POST.get('discount')
+        cart_items = request.POST.getlist('cart_item')
+        cart_items = CartItem.objects.filter(pk__in=cart_items)
+        order_form = OrderForm(request.POST)
+        product_id = request.POST.get('product_id')
+        type = request.POST.get('type')
+        quantity = request.POST.get('quantity')
+        if quantity:
+            quantity = int(request.POST.get('quantity'))
+
+        if order_form.is_valid():
+            order = order_form.save(commit=False)
+            order.customer = request.user
+            status = OrderStatus.objects.get(name='Chờ xác nhận')
+            order.status = status
+            order.save()
+            tracking = Tracking.objects.create(order_status=status, order=order)
+            tracking.save()
+            coupon = Coupon.objects.filter(code=coupon).order_by('-start_date').first()
+            messages.success(request, 'Đặt hàng thành công')
+
+            if coupon:
+                coupon.quantity -= 1
+                coupon.save()
+            for cart_item in cart_items:
+                order_item = OrderItem.objects.create(
+                    type=cart_item.type,
+                    quantity=cart_item.quantity,
+                    price=cart_item.product.sale if cart_item.product.sale else cart_item.product.price,
+                    order=order,
+                    product=cart_item.product
+                )
+                order_item.save()
+
+                product = cart_item.product
+                product.total_sold += cart_item.quantity
+                product.save()
+
+                product_detail = ProductDetail.objects.filter(product=product, type=cart_item.type).first()
+                if product_detail.quantity < cart_item.quantity:
+                    raise ValidationError('Sản phẩm đã hết hàng')
+                product_detail.quantity -= cart_item.quantity
+                product_detail.save()
+
+                cart_item.delete()
+            if product_id:
+                product = Product.objects.filter(pk=product_id).annotate(
+                    curr_price=Case(
+                        When(sale__gte=0, then=F('sale')),
+                        default=F('price'),
+                        output_field=FloatField()
+                    ),
+                ).first()
+                product_detail = ProductDetail.objects.filter(product=product, type=type).first()
+                if product_detail.quantity < quantity:
+                    raise ValidationError('Sản phẩm đã hết hàng')
+                product_detail.quantity -= quantity
+                product_detail.save()
+
+                product.total_sold += quantity
+                product.save()
+                order_item = OrderItem.objects.create(
+                    type=type,
+                    quantity=quantity,
+                    price=product.curr_price,
+                    order=order,
+                    product=product
+                )
+                order_item.save()
+                
+            return redirect('/get-order')
+        else:
+            context = {
+                'cart_items': cart_items,
+                'coupon': coupon,
+                'discount': discount,
+                'order_form': order_form,
+            }
+            return render(request, 'customer/order/checkout.html', context)
+    return redirect('home')
+
+
+@login_required(login_url='/login')
+def get_order(request):
+    keyword = request.GET.get('keyword', '')
+    status_choice = request.GET.get('status', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+
+    orders = Order.objects.filter(customer=request.user).order_by('-order_id')
+    if keyword:
+        orders = orders.filter(order_id__icontains=keyword)
+    if status_choice:
+        orders = orders.filter(status__name=status_choice)
+    if start_date:
+        orders = orders.filter(date__gte=start_date)
+    if end_date:
+        orders = orders.filter(date__lte=end_date)
+
+    paginator = Paginator(orders, 10)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    status = OrderStatus.objects.all()
+
+    context = {
+        'page_obj': page_obj,
+        'orders' : page_obj.object_list,
+        'states': status,
+        'messages': messages.get_messages(request)
+    }
+    return render(request, 'customer/orders.html', context)
+
+
+def get_order_detail(request):
+    order_id = int(request.GET.get('order_id'))
+    order = get_object_or_404(Order, pk=order_id)
+    order_tracking = Tracking.objects.filter(order=order).order_by('date')
+    context = {
+        'order': order,
+        'order_tracking': order_tracking
+    }
+    return render(request, 'customer/order_detail.html', context)
+
+
+def cancel_order(request):
+    order_id = request.GET.get('order_id')
+    order = Order.objects.get(pk=order_id)
+    order.status = OrderStatus.objects.get(name='Hủy đơn')
+    order_item = order.orderitem_set.all()
+    for item in order_item:
+        product_detail = ProductDetail.objects.filter(product=item.product, type=item.type).first()
+        product_detail.quantity += item.quantity
+        product_detail.save()
+    order.save()
+    context = {
+        'order': order,
+    }
+    return render(request, 'customer/order_detail.html', context)
+
 
 def updateStatus(request):
     user_id = int(request.POST.get('user_id'))

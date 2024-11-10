@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trạng thái đơn hàng</title>
+
+    <!-- bootstrap css -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
+        crossorigin="anonymous" />
+    <!-- css -->
+    <!-- Font awesome -->
+    <script src="https://kit.fontawesome.com/2f72a1f7d3.js" crossorigin="anonymous"></script>
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-main">
+            <div class="container ps-2">
+                <div class="row d-flex justify-content-between align-items-center">
+                    <div class="col-lg-auto col-4">
+                        <a href="#" class="navbar-brand"><img src="app/media/images/Logo.png" width="100"></a>
+                    </div>
+                    <div class="col-lg-auto order-lg-last col-8">
+                        <div class="d-flex float-end">
+                            <a href="" class="header-nav-item ms-4">
+                                <i class="fa-solid fa-cart-shopping"></i>
+                                <!-- <span
+                            class="badge position-absolute translate-middle bg-danger start-80"
+                            >5</span
+                          > -->
+                            </a>
+                            <a href="" class="header-nav-item ms-4">
+                                <i class="fa-solid fa-user"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="col-lg-6 col-12">
+                        <form action="" class="d-flex position-relative justify-content-center align-items-center" role="search">
+                            <input type="text" class="form-control shadow-none search-input" type="search" placeholder="Search" />
+                            <div class="search-btn" type="submit">
+                                <i class="fa fa-search"></i>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container p-0">
+            <button class="navbar-toggler">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="navbar-collapse collapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item .active">
+                        <a href="" class="nav-link pe-5"><span class="nav-content">Trang chủ</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="" class="nav-link pe-5"><span class="nav-content">Sản phẩm</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="" class="nav-link pe-5"><span class="nav-content">Đơn hàng</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="" class="nav-link pe-5"><span class="nav-content">Thanh toán</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="" class="nav-link pe-5"><span class="nav-content">About</span></a>
+                    </li>
+                </ul>
+            </div>
+            <!-- <ul class="navbar-nav">
+                  <li class="nav-item">Home</li>
+                          <li class="nav-item">Product</li>
+                          <li class="nav-item">Order</li>
+                  <li class="nav-item"></li>
+                </ul> -->
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="py-5">
+        <div class="container">
+            <h2 class="mb-2">Trạng thái đơn hàng
+                <span class="color-blue fw-normal">#2345</span>
+            </h2>
+
+            <hr class="mb-5">
+            <div class="row">
+                <div class="col-7">
+                    <div class="timeline">
+                        <div class="timeline-item order-confimation">
+                            <div class="row">
+                                <div class="col-auto fw-medium d-flex">
+                                    <div class="timeline-item-datetime">
+                                        <div class="timeline-item-date">12/12/2021</div>
+                                        <div class="timeline-item-time">12:00</div>
+                                    </div>
+                                    <div class="timeline-item-bar timeline-success ms-4 fs-4 position-relative">
+                                        <div class="timeline-icon"><i class="fa-solid fa-clipboard-check"></i> </div>
+                                        <span class="timeline-bar position-absolute border-success"></span>
+                                    </div>
+                                </div>
+                                <div class="col-auto timeline-item-status">
+                                    <h5>Xác nhận</h5>
+                                    <p>Đơn hàng đang đợi người bán xác nhận</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item order-preparation">
+                            <div class="row">
+                                <div class="col-auto fw-medium d-flex">
+                                    <div class="timeline-item-datetime">
+                                        <div class="timeline-item-date">12/12/2021</div>
+                                        <div class="timeline-item-time">12:00</div>
+                                    </div>
+                                    <div class="timeline-item-bar ms-4 fs-4 position-relative">
+                                        <div class="timeline-icon"><i class="fa-solid fa-box"></i></div>
+                                        <span class="timeline-bar timeline-success position-absolute border-processing"></span>
+                                    </div>
+                                </div>
+                                <div class="col-auto timeline-item-status">
+                                    <h5>Chuẩn bị hàng</h5>
+                                    <p>Người bán đang chuẩn bị hàng</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item deliver-to-shipping">
+                            <div class="row">
+                                <div class="col-auto fw-medium d-flex">
+                                    <div class="timeline-item-datetime">
+                                        <div class="timeline-item-date">12/12/2021</div>
+                                        <div class="timeline-item-time">12:00</div>
+                                    </div>
+                                    <div class="timeline-item-bar timeline-processing ms-4 fs-4 position-relative">
+                                        <div class="timeline-icon"><i class="fa-solid fa-truck-ramp-box"></i></i></div>
+                                        <span class="timeline-bar position-absolute border-processing"></span>
+                                    </div>
+                                 </div>
+                                <div class="col-auto timeline-item-status">
+                                    <h5>Giao cho vận chuyển</h5>
+                                    <p>Đơn hàng đã được giao đến đơn vị vận chuyển</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item delivering">
+                            <div class="row">
+                                <div class="col-auto fw-medium d-flex">
+                                    <div class="timeline-item-datetime">
+                                        <div class="timeline-item-date">12/12/2021</div>
+                                        <div class="timeline-item-time">12:00</div>
+                                    </div>
+                                    <div class="timeline-item-bar timeline-pending ms-4 fs-4 position-relative">
+                                        <div class="timeline-icon "><i class="fa-solid fa-truck-fast"></i></div>
+                                        <span class="timeline-bar position-absolute border-processing"></span>
+                                    </div>
+                                </div>
+                                <div class="col-auto timeline-item-status">
+                                    <h5>Đang giao</h5>
+                                    <p>Đơn hàng đang được vận chuyển</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item successful-delivery">
+                            <div class="row">
+                                <div class="col-auto fw-medium d-flex">
+                                    <div class="timeline-item-datetime">
+                                        <div class="timeline-item-date">12/12/2021</div>
+                                        <div class="timeline-item-time">12:00</div>
+                                    </div>
+                                    <div class="timeline-item-bar ms-4 fs-4 position-relative">
+                                        <div class="timeline-icon timeline-pending"><i class="fa-solid fa-box-open"></i></div>
+                                    </div>
+                                </div>
+                                <div class="col-auto timeline-item-status">
+                                    <h5>Thành công</h5>
+                                    <p>Đơn hàng đã được giao thành công</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-5">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5>Đơn hàng</h5>
+                            <div class="list-order-item mt-3">
+                                <div class="row d-flex align-items-center my-2">
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <img src="../assets/image/shirt.jpg" alt="" style="width: 40px;height: 40px;">
+                                            <div class="order-item-name text-container ms-2">Tee basic ss1 áo thun tay lỡ unisex Local Brand - AO_THUN_DVR (V427)</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-2 d-flex justify-content-center">x1</div>
+                                    <div class="col-4 d-flex flex-row-reverse">100.000đ</div>
+                                </div>
+                                <div class="row d-flex align-items-center my-2">
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <img src="../assets/image/shirt.jpg" alt="" style="width: 40px;height: 40px;">
+                                            <div class="order-item-name text-container ms-2">Tee basic ss1 áo thun tay lỡ unisex Local Brand - AO_THUN_DVR (V427)</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-2 d-flex justify-content-center">x1</div>
+                                    <div class="col-4 d-flex flex-row-reverse">100.000đ</div>
+                                </div>
+                                <div class="row d-flex align-items-center my-2">
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <img src="../assets/image/shirt.jpg" alt="" style="width: 40px;height: 40px;">
+                                            <div class="order-item-name text-container ms-2">Tee basic ss1 áo thun tay lỡ unisex Local Brand - AO_THUN_DVR (V427)</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-2 d-flex justify-content-center">x1</div>
+                                    <div class="col-4 d-flex flex-row-reverse">100.000đ</div>
+                                </div>
+                            </div>
+
+                            <div class="order-infor-money">
+                                <div class="row my-2 pt-2">
+                                    <div class="col-9">Tổng giá</div>
+                                    <div class="col-3 d-flex flex-row-reverse">300.000đ</div>
+                                </div>
+                                <div class="row my-2">
+                                    <div class="col-9">Voucher</div>
+                                    <div class="col-3 d-flex flex-row-reverse color-red">-50.000đ</div>
+                                </div>
+                                <div class="row my-2">
+                                    <div class="col-9">Phí vận chuyển</div>
+                                    <div class="col-3 d-flex flex-row-reverse">50.000đ</div>
+                                </div>
+                            </div>
+                            <div class="row my-2 fs-5">
+                                <div class="col-9">Tổng tiền</div>
+                                <div class="col-3 d-flex flex-row-reverse">300.000đ</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class=" container">
+            <div class="row justify-content-between">
+                <div class="col-4">
+                    <h5>Shop</h5>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Alias corporis, ratione ullam, obcaecati autem eius quae vero accusantium, tenetur eveniet voluptatum labore minus accusamus asperiores corrupti harum aliquam debitis! Asperiores.</p>
+                </div>
+                <div class="col-auto">
+                    <h5>Về Shop</h5>
+                    <div class="d-flex flex-column">
+                        <a href="">Giới thiệu</a>
+                        <a href="">Điều khoản</a>
+                        <a href="">Chính sách</a>
+                        <a href="">Tuyển dụng</a>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <h5>Liên hệ</h5>
+                    <div class="d-flex flex-column">
+                        <a href=""><i class="fa-brands fa-facebook me-2"></i>Facebook</a>
+                        <a href=""><i class="fa-brands fa-instagram me-2"></i>Instagram</a>
+                        <a href=""><i class="fa-brands fa-tiktok me-2"></i></i>Tiktok</a>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <h5>Chăm sóc khách hàng</h5>
+                    <div class="d-flex flex-column">
+                        <a href="">Trung tâm trợ giúp</a>
+                        <a href="">Hướng dẫn mua hàng</a>
+                        <a href="">Thanh toán</a>
+                        <a href="">Vận chuyển</a>
+                        <a href="">Bảo hành</a>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <h5>Thanh toán</h5>
+                    <div class="d-flex flex-column">
+                        <a href="">Giới thiệu</a>
+                        <a href="">Điều khoản</a>
+                        <a href="">Chính sách</a>
+                        <a href="">Tuyển dụng</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- jquery -->
+    <script
+        src="https://code.jquery.com/jquery-3.6.4.js"
+        integrity="sha256-a9jBBRygX1Bh5lt8GZjXDzyOB+bWve9EiO7tROUtj/E="
+        crossorigin="anonymous"></script>
+
+    <!-- bootstrap js -->
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+        crossorigin="anonymous"></script>
+        
+</body>

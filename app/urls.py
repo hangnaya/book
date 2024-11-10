@@ -15,6 +15,9 @@ urlpatterns = [
     path('check-coupon', views.check_coupon, name='check-coupon'),
     path('checkout', views.checkout, name='check-out'),
     path('buynow', views.buy_now, name='buy-now'),
+    path('get-order', views.get_order, name='get_order'),
+    path('order-detail', views.get_order_detail, name='order-detail'),
+    path('cancel-order', views.cancel_order, name='cancel-order'),
 
     # address shipping
     path('add-address', views.add_address, name='add-address'),

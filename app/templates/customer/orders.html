@@ -1,0 +1,168 @@
+{% extends 'customer/base.html' %}
+{% load my_filters %}
+{% block content %}
+<!-- Content -->
+<div class="py-4">
+    <div class="container">
+        <h4 class="mb-2">Đơn hàng của bạn
+        </h4>
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="alert alert-success" style="list-style-type: none;">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <div class="orders-table min-height mt-4">
+        <div>
+            <div class='d-flex mb-4 align-items-center'>
+                <div class="order-search">
+                    <form action="/get-order" method="get" class="d-flex position-relative justify-content-center align-items-center" role="search">
+                        {% csrf_token %}
+                        <input type="text" class="form-control shadow-none search-input" type="search" placeholder="Search" name="keyword" value="{{ request.GET.keyword }}" />
+                        <button class="search-btn" type="submit" style="background-color: transparent;border: none;">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+                <form action="/get-order" method="get" id="filter-form">
+                    {% csrf_token %}
+                    <div class='d-flex justify-content-between align-items-center gap-3'>
+                        <div class="dropdown">
+                            <div class="btn dropdown-toggle filter-list" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="filter-choice" id="status-choice">{{ request.GET.status|default:'Trạng thái'}}</div>
+                            </div>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                {% for status in states %}
+                                <li>
+                                    <div class="dropdown-item" data-status='{{ status.name }}'>{{ status.name }}</div>
+                                </li> 
+                                {% endfor %}  
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="filter-start-date" class="form-label m-0">Từ</label>
+                            <input type="date" class="form-control" name="start_date" id="filter-start-date" aria-describedby="helpId" placeholder="">
+                        </div>
+    
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="filter-end-date" class="form-label m-0">Đến</label>
+                            <input type="date" class="form-control" name="end_date" id="filter-end-date" aria-describedby="helpId" placeholder="">
+                        </div>
+    
+                        <button type="submit" class="btn btn-primary ms-2 d-flex align-items-center px-3"><i class="fa-solid fa-filter me-2"></i>Lọc
+                        </button>
+                        <input type="hidden" name="status" id="status-input" value="{{ request.GET.status }}">
+                        <input type="hidden" name="keyword" id="keyword-input" value="{{ request.GET.keyword }}">
+                    </div>
+                </form>
+    
+            </div>
+        {% if not orders %}
+        <div class='alert alert-danger mt-3 d-flex justify-content-center mt-4'>
+            Không có đơn hàng nào
+        </div>
+        {% else %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Mã đơn</th>
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col">Phương thức thanh toán</th>
+                        <th scope="col">Ngày đặt hàng</th>
+                        <th scope="col">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr class="order-item">
+                        <td><a href="/order-detail?order_id={{order.order_id}}" class="color-blue">#{{order.order_id}}</a></td>
+                        <td class='order-status'>
+                            <span class="badge rounded-pill badge-success">
+                                <span class="badge-lable status">{{order.status.name}}</span>
+                                <i class="fa-solid fa-check"></i>
+                            </span>
+                        </td>
+                        <td>{{order.payment_method}}</td>
+                        <td>{{order.date|date:"H:i:s  d/m/Y"}}</td>
+                        <td>{{order.total|floatformat:0|intcomma_dot}}đ</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="page-controller">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if page_obj.number == 1 %}disabled{% endif %} ">
+                        <a class="page-link pre-page" href="/get-order?page=1" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% if page_obj.has_previous %}
+                    <li class="page-item" aria-current="page">
+                        <a class="page-link" href="/get-order?page={{page_obj.previous_page_number}}">{{page_obj.previous_page_number}}</a>
+                    </li>
+                    {% endif %}
+                    <li class="page-item active">
+                        <a class="page-link" href="#">{{page_obj.number}}</a>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item" aria-current="page">
+                        <a class="page-link" href="/get-order?page={{page_obj.next_page_number}}">{{page_obj.next_page_number}}</a>
+                    </li>
+                    {% endif %}
+                    <li class="page-item">
+                        <a class="page-link next-page {% if page_obj.number == 1 %}disabled{% endif %}" href="/get-order?page={{page_obj.paginator.num_pages}}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+
+
+
+</div>
+</div>
+
+
+
+<script>
+    $(document).ready(function() {
+        $('.order-status').each(function() {
+            console.log('click');
+            var status = $(this).find('.status').text();
+            console.log(status);
+            var color_status = '';
+            var icon = '';
+            if (status == 'Chờ xác nhận') {
+                color_status = 'badge-infor';
+                icon = '<i class="fa-regular fa-clock"></i>';
+            } else if (status == 'Hủy đơn') {
+                color_status = 'badge-secondary';
+                icon = '<i class="fa-solid fa-xmark"></i>';
+            } else if (status == 'Giao hàng thành công') {
+                color_status = 'badge-success';
+                icon = '<i class="fa-solid fa-check"></i>';
+            } else {
+                color_status = 'badge-danger';
+                icon = '<i class="fa-regular fa-clock"></i>';
+            }
+            $(this).html('<span class="badge rounded-pill ' + color_status + '"><span class="badge-lable me-2">' + status + '</span>' + icon + '</span>')
+        });
+
+        $('.dropdown-item').click(function() {
+            var status = $(this).data('status');
+            $('#status-input').val(status);
+            $('#status-choice').text(status);
+        });
+
+    });
+</script>
+{% endblock content %}

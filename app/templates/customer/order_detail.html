@@ -1,0 +1,296 @@
+{% extends 'customer/base.html' %}
+{% load my_filters %}
+{% block content %}
+<!-- Content -->
+<div class="py-4">
+    <div class="container">
+        <h4 class="mb-2">Trạng thái đơn hàng
+            <span class="color-blue fw-normal">#{{ order.order_id }}</span>
+        </h4>
+
+        <hr class="mb-5">
+        <div class="row">
+            <div class="col-6 ">
+                <div class="timeline">
+                    <div class="timeline-item order-confimation">
+                        <div class="row">
+                            <div class="col-auto fw-medium d-flex">
+                                <div class="timeline-item-datetime">
+                                    <div class="timeline-item-date">{{order.tracking_set.first.date|date:"d/m/Y"}}</div>
+                                    <div class="timeline-item-time">{{order.tracking_set.first.date|date:"h:i"}}</div>
+                                </div>
+                                <div class="timeline-item-bar timeline-success ms-4 fs-4 position-relative">
+                                    <div class="timeline-icon"><i class="fa-solid fa-clipboard-check"></i> </div>
+                                    <span class="timeline-bar position-absolute border-success"></span>
+                                </div>
+                            </div>
+                            <div class="col-auto timeline-item-status">
+                                <h5>{{order.tracking_set.first.order_status.name}}</h5>
+                                <p>{{order.tracking_set.first.order_status.description}}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item order-preparation">
+                        <div class="row">
+                            <div class="col-auto fw-medium d-flex">
+                                <div class="timeline-item-datetime">
+                                    <div class="timeline-item-date">12/12/2021</div>
+                                    <div class="timeline-item-time">12:00</div>
+                                </div>
+                                <div class="timeline-item-bar ms-4 fs-4 position-relative">
+                                    <div class="timeline-icon"><i class="fa-solid fa-box"></i></div>
+                                    <span class="timeline-bar timeline-success position-absolute border-processing"></span>
+                                </div>
+                            </div>
+                            <div class="col-auto timeline-item-status">
+                                <h5>Chuẩn bị hàng</h5>
+                                <p>Người bán đang chuẩn bị hàng</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item deliver-to-shipping">
+                        <div class="row">
+                            <div class="col-auto fw-medium d-flex">
+                                <div class="timeline-item-datetime">
+                                    <div class="timeline-item-date">12/12/2021</div>
+                                    <div class="timeline-item-time">12:00</div>
+                                </div>
+                                <div class="timeline-item-bar timeline-processing ms-4 fs-4 position-relative">
+                                    <div class="timeline-icon"><i class="fa-solid fa-truck-ramp-box"></i></i></div>
+                                    <span class="timeline-bar position-absolute border-processing"></span>
+                                </div>
+                            </div>
+                            <div class="col-auto timeline-item-status">
+                                <h5>Giao cho vận chuyển</h5>
+                                <p>Đơn hàng đã được giao đến đơn vị vận chuyển</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item delivering">
+                        <div class="row">
+                            <div class="col-auto fw-medium d-flex">
+                                <div class="timeline-item-datetime">
+                                    <div class="timeline-item-date">12/12/2021</div>
+                                    <div class="timeline-item-time">12:00</div>
+                                </div>
+                                <div class="timeline-item-bar timeline-pending ms-4 fs-4 position-relative">
+                                    <div class="timeline-icon "><i class="fa-solid fa-truck-fast"></i></div>
+                                    <span class="timeline-bar position-absolute border-processing"></span>
+                                </div>
+                            </div>
+                            <div class="col-auto timeline-item-status">
+                                <h5>Đang giao</h5>
+                                <p>Đơn hàng đang được vận chuyển</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item successful-delivery">
+                        <div class="row">
+                            <div class="col-auto fw-medium d-flex">
+                                <div class="timeline-item-datetime">
+                                    <div class="timeline-item-date">12/12/2021</div>
+                                    <div class="timeline-item-time">12:00</div>
+                                </div>
+                                <div class="timeline-item-bar ms-4 fs-4 position-relative">
+                                    <div class="timeline-icon timeline-pending"><i class="fa-solid fa-box-open"></i></div>
+                                </div>
+                            </div>
+                            <div class="col-auto timeline-item-status">
+                                <h5>Thành công</h5>
+                                <p>Đơn hàng đã được giao thành công</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Đơn hàng</h5>
+                        <div class="list-order-item mt-3">
+                            {% for item in order.orderitem_set.all %}
+                            <div class="row d-flex align-items-center my-2 order-item">
+                                <div class="col-4">
+                                    <a href='/product/{{item.product.product_id}}'>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{item.product.productimage_set.first.name.url}}" alt="" style="width: 40px;height: 40px;">
+                                            <div class="order-item-name text-container ms-2">{{item.product.name}}</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-4">Loại:  
+                                    {% if item.type == '0' %}
+                                        Sách mới
+                                    {% else %}
+                                        Sách cũ
+                                    {% endif %}
+                                </div>
+                                <div class="col-1 d-flex justify-content-center quantity">x {{ item.quantity}}</div>
+                                <div class="col-3 d-flex flex-row-reverse price-item">{{ item.price|floatformat:0 }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="order-infor-money">
+                            <div class="row my-2 pt-2">
+                                <div class="col-9">Tổng giá</div>
+                                <div class="col-3 d-flex flex-row-reverse total-money"></div>
+                            </div>
+                            <div class="row my-2">
+                                <div class="col-9">Voucher</div>
+                                <div class="col-3 d-flex flex-row-reverse color-red discount">{{order.discount|floatformat:0|intcomma_dot}} đ</div>
+                            </div>
+                            <div class="row my-2">
+                                <div class="col-9">Phí vận chuyển</div>
+                                <div class="col-3 d-flex flex-row-reverse ship-price">{{order.shipping|floatformat:0|intcomma_dot}}đ</div>
+                            </div>
+                        </div>
+                        <div class="row my-2 fs-5">
+                            <div class="col-9">Tổng tiền</div>
+                            <div class="col-3 d-flex flex-row-reverse total"></div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-4">
+                            {% if order.status.name == 'Giao hàng thành công' %}
+                            <a href='/feedback?order_id={{order.order_id}}' class='btn btn-primary' style='width: 120px;'>Đánh giá</a>
+
+                            {% elif order.status.name == 'Hủy đơn' %}
+                            <div  class='btn btn-secondary' style='width: 120px;'>Đã hủy đơn</div>
+
+                            {% else %}
+                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#cancel-order" style='width: 120px;'>
+                                Hủy đơn
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="cancel-order" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="staticBackdropLabel">Xác nhận</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Bạn có muốn hủy đơn hàng không
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Quay lại</button>
+                                        <a href='/cancel-order?order_id={{order.order_id}}' class='btn btn-primary'>Hủy đơn</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        var totalPrice = 0;
+        var voucher = 0;
+        var totaMoney = 0;
+        $('.order-item').each(function() {
+            var quantity = parseInt($(this).find('.quantity').text().replace('x', ''));
+            var price = parseFloat($(this).find('.price-item').text().replace('.', '').replace('đ', ''));
+            $(this).find('.price-item').text(price.toLocaleString('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).replace('₫', 'đ'));
+            totalPrice += quantity * price;
+        });
+        $('.total-money').text(totalPrice.toLocaleString('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).replace('₫', 'đ'));
+
+
+        voucher = parseFloat($('.order-infor-money .discount').text().replace('.', '')) || 0;
+        var ship_price = parseFloat($('.order-infor-money .ship-price').text().replace('.', '').replace('đ', ''));
+        const totalPriceNotFeeShip = totalPrice + voucher;
+        totaMoney = totalPriceNotFeeShip < 0 ? ship_price : (totalPriceNotFeeShip + ship_price);
+
+        $('.total').text(totaMoney.toLocaleString('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).replace('₫', 'đ'));
+        var icon = ['clipboard-check', 'box', 'truck-ramp-box', 'truck-fast', 'box-open'];
+        var status_name = ['Chờ xác nhận', 'Chuẩn bị hàng', 'Giao cho vận chuyển', 'Đang giao hàng', 'Giao hàng thành công'];
+        var color = ['success', 'processing', 'pending'];
+        var status = [];
+        var description = ['Đơn hàng đã được xác nhận', 'Đơn hàng đang được chuẩn bị', 'Đơn hàng đã được giao cho đơn vị vận chuyển', 'Đơn hàng đang được vận chuyển', 'Đơn hàng đã được giao thành công'];
+        var pending = 'Đang chờ xử lý';
+
+        {% if order.status.name != 'Hủy đơn' %}
+        {% for tracking in order_tracking %}
+        status.push({
+            'date': '{{ tracking.date|date:"d/m/Y"|default:"" }}',
+            'time': '{{ tracking.date|date:"H:i"|default:"" }}',
+            'name': '{{ tracking.order_status.name }}',
+            'description': '{{ tracking.order_status.description }}',
+        });
+        {% endfor %} 
+        {% else %}
+        pending = ''
+        {% endif %}
+
+        var timeline = $('.timeline');
+        timeline.empty();
+        
+        status.forEach((element, i) => {
+            let color = i < status.length-1 ? 'success' : 'processing';
+            color = i == icon.length-1 ? 'sucess' : color;
+            console.log(color);
+            timeline.append(`
+            <div class="timeline-item">
+                <div class="row">
+                    <div class="col-auto fw-medium d-flex">
+                        <div class="timeline-item-datetime">
+                            <div class="timeline-item-date">${element.date}</div>
+                            <div class="timeline-item-time">${element.time}</div>
+                        </div>
+                        <div class="timeline-item-bar timeline-${color} ms-4 fs-4 position-relative">
+                            <div class="timeline-icon"><i class="fa-solid fa-${icon[i]}"></i></div>
+                            ${ i < icon.length-1 ? '<span class="timeline-bar position-absolute border-'+ color + '"></span>':'' }
+                        </div>
+                    </div>
+                    <div class="col-auto timeline-item-status">
+                        <h6>${element.name}</h6>
+                        <p>${element.description}</p>
+                    </div>
+                </div>
+            </div>
+            `);
+        });
+        for(let i = status.length; i < icon.length; i++){
+            timeline.append(`
+            <div class="timeline-item">
+                <div class="row">
+                    <div class="col-auto fw-medium d-flex">
+                        <div class="timeline-item-datetime">
+                            <div class="timeline-item-date"></div>
+                            <div class="timeline-item-time"></div>
+                        </div>
+                        <div class="timeline-item-bar timeline-pending ms-4 fs-4 position-relative">
+                            <div class="timeline-icon"><i class="fa-solid fa-${icon[i]}"></i></div>
+                            ${ i < icon.length-1 ? '<span class="timeline-bar position-absolute border-processing"></span>':'' }
+                        </div>
+                    </div>
+                    <div class="col-auto timeline-item-status">
+                        <h6>${status_name[i]}</h6>
+                        <p></p>
+                    </div>
+                </div>
+            </div>
+            `);
+        }
+        
+
+    })
+</script>
+{% endblock content %}
