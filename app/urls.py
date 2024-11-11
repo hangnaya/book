@@ -18,8 +18,14 @@ urlpatterns = [
     path('get-order', views.get_order, name='get_order'),
     path('order-detail', views.get_order_detail, name='order-detail'),
     path('cancel-order', views.cancel_order, name='cancel-order'),
+    # API
+    path('filter-product', views.getListProduct, name='list-product'),
+    path('register', views.register, name='register'),
+    path('order', views.order, name='order'),
+    path('list-coupon', views.getCoupon, name='list-coupon'),
     path('list-post', views.getPost, name='list-post'),
     path('post/<int:post_id>', views.postDetail, name='post-detail'),
+    path('notification', views.notification, name='notification'),
 
     # address shipping
     path('add-address', views.add_address, name='add-address'),

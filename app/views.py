@@ -621,6 +621,19 @@ def cancel_order(request):
 
 
 
+
+def getCoupon(request):
+    coupons = Coupon.objects.filter(start_date__lte=timezone.now(), end_date__gte=timezone.now()).order_by(
+        '-start_date')
+    paginator = Paginator(coupons, 10)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    context = {
+        'page_obj': page_obj,
+        'coupons': page_obj.object_list
+    }
+    return render(request, 'customer/list-coupon.html', context)
+
 def getPost(request):
     categories = CategoryPost.objects.filter(is_active = 1)
     keyword = request.GET.get('keyword', '')
@@ -656,6 +669,10 @@ def updateStatus(request):
     user.is_active = is_active
     user.save()
     return JsonResponse({'status': 'true'})
+
+def notification(request):
+    return render(request, 'customer/notification.html')
+
 
 @login_required(login_url='/login')
 def addProduct(request):
