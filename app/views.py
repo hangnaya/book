@@ -620,6 +620,71 @@ def cancel_order(request):
     return render(request, 'customer/order_detail.html', context)
 
 
+def handleFeedback(request):
+    if request.method == 'GET':
+        order_id = request.GET.get('order_id')
+        order = Order.objects.get(pk=order_id)
+        context = {
+            'order': order
+        }
+
+    if request.method == 'POST':
+        orderitem_id = request.POST.get('order_item_id')
+        orderitem = OrderItem.objects.get(pk=orderitem_id)
+        product = orderitem.product
+        comment = request.POST.get('comment')
+        rating = request.POST.get('rating')
+        images = request.FILES.getlist('images')
+        feedback = Feedback.objects.create(
+            comment=comment,
+            rating=rating,
+            product=product,
+            customer=request.user
+        )
+        feedback.save()
+        for image in images:
+            feedback_image = FeedbackImage(name=image, feedback=feedback)
+            feedback_image.save()
+        orderitem.feedback = feedback
+        orderitem.save()
+
+        order = orderitem.order
+        context = {
+            'order': order
+        }
+
+    return render(request, 'customer/feedback.html', context)
+
+
+@login_required(login_url='/login')
+def getFeedback(request):
+    feedbacks = Feedback.objects.filter(customer=request.user).order_by('-date')
+    paginator = Paginator(feedbacks, 10)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'feedbacks': page_obj.object_list
+    }
+    return render(request, 'customer/list-feedback.html', context)
+
+
+@api_view(['GET'])
+def getFeedbackByProduct(request):
+    product_id = int(request.GET.get('product_id'))
+    product = Product.objects.get(pk=product_id)
+    feedbacks = Feedback.objects.filter(product=product).order_by('-date')
+    paginator = PageNumberPagination()
+    paginator.page_query_param = 'page'
+    paginator.page_size = 5
+    result_page = paginator.paginate_queryset(feedbacks, request)
+    serializer = FeedbackSerializer(result_page, many=True, context={'request': request})
+
+    respone = paginator.get_paginated_response(serializer.data)
+    respone.data['current_page'] = paginator.page.number
+    respone.data['total_page'] = paginator.page.paginator.num_pages
+    return respone
 
 
 def getCoupon(request):
@@ -662,6 +727,63 @@ def postDetail(request, post_id):
         'post': post,
         'other_posts': other_posts,
     })
+
+def profile(request):
+    user = request.user
+    created_at = user.date_joined
+    day_created = timezone.now() - created_at
+    day_created = convert_diff(day_created) + ' trước'
+    last_order = Order.objects.filter(customer=user).last()
+    today = timezone.now()
+    if last_order:
+        day_last_order = timezone.now() - last_order.date
+        day_last_order = convert_diff(day_last_order)
+        day_last_order += ' trước'
+    else:
+        day_last_order = 'Chưa đặt hàng'
+    orders = Order.objects.filter(customer=user)
+    total_order = orders.count()
+    total_order_new = orders.filter(status=1).count()
+    total_order_confirmed = orders.filter(status=2).count()
+    total_order_prepare = orders.filter(status=3).count()
+    total_order_delivering = orders.filter(status=4).count()
+    total_order_canceled = orders.filter(status=5).count()
+    total_order_success = orders.filter(status=6).count()
+
+    total_money = orders.aggregate(total_money=Sum('total', default=0))['total_money']
+    total_money_success = orders.filter(status__name='Giao hàng thành công').aggregate(
+                total_money=Sum('total'))['total_money']
+    context = {
+        'user': user,
+        'day_created': day_created,
+        'day_last_order': day_last_order,
+        'total_order': total_order,
+        'total_order_new': total_order_new,
+        'total_order_confirmed': total_order_confirmed,
+        'total_order_preparing': total_order_prepare,
+        'total_order_delivering': total_order_delivering,
+        'total_order_canceled': total_order_canceled,
+        'total_order_success': total_order_success,
+        'total_money': total_money,
+        'total_money_success': total_money_success,
+        'today': today,
+        'messages': '',
+        'error': '',
+    }
+
+    if request.method == 'POST':
+        form = UserForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            context['messages']= 'Cập nhật thông tin thành công'
+        else:
+            context['error'] = form.errors
+        context['form'] = form
+        isAdmin = request.POST.get('isAdmin')
+        if isAdmin:
+            return render(request, 'admin_shop/customer/profile.html', context=context)
+    return render(request, 'customer/profile.html', context)
+
 def updateStatus(request):
     user_id = int(request.POST.get('user_id'))
     is_active = int(request.POST.get('is_active'))

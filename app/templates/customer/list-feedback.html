@@ -1,0 +1,125 @@
+{% extends 'customer/base.html' %}
+
+{% block content %}
+<div class="py-4">
+    <div class="container">
+        <h4 class="mb-4">Danh sách đánh giá</h4>
+        {% if not feedbacks %}
+        <div class='alert alert-danger mt-3 d-flex justify-content-center'>
+            Không có đánh giá nào
+        </div>
+        {% else %}
+        <div class="feedback-table min-height card px-5 py-3 ">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width: 300px;">Sản phẩm</th>
+                        <th scope="col">Đánh giá</th>
+                        <th scope="col" style="width: 300px;">Bình luận</th>
+                        <th scope="col">Ngày</th>
+                        <th scope="col">Đơn hàng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for feedback in feedbacks %}
+                    <tr class="feedback-item">
+                        <td>
+                            <a href="/product/{{feedback.product.product_id}}">
+                                <div class="d-flex gap-2">
+                                    <img src="{{feedback.product.productimage_set.first.name.url}}" alt="" width="50px">
+                                    <div class="text-container">{{feedback.product.name}}</div>
+                                </div>
+                            </a>
+                        </td>
+                        <td class='rating-{{feedback.feedback_id}}'>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                        </td>
+                        <td>
+                            <div class="">
+                                {{ feedback.comment}}
+                            </div>
+                        </td>
+                        <td>{{ feedback.date|date:"H:i d/m/Y" }}</td>
+                        <td>
+                            <a href="/feedback?order_id={{ feedback.orderitem_set.first.order.order_id }}" class="color-blue">
+                                #{{ feedback.orderitem_set.first.order.order_id }}
+                            </a>
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="page-controller">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item {% if page_obj.number == 1 %}disabled{% endif %} ">
+                            <a class="page-link pre-page" href="/get-feedback?page=1" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% if page_obj.has_previous %}
+                        <li class="page-item" aria-current="page">
+                            <a class="page-link" href="/get-feedback?page={{page_obj.previous_page_number}}">{{page_obj.previous_page_number}}</a>
+                        </li>
+                        {% endif %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{page_obj.number}}</a>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item" aria-current="page">
+                            <a class="page-link" href="/get-feedback?page={{page_obj.next_page_number}}">{{page_obj.next_page_number}}</a>
+                        </li>
+                        {% endif %}
+                        <li class="page-item">
+                            <a class="page-link next-page {% if page_obj.number == 1 %}disabled{% endif %}" href="/get-feedback?page={{page_obj.paginator.num_pages}}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        {
+            %
+            for feedback in feedbacks %
+        }
+        var rating = {
+            {
+                feedback.rating
+            }
+        };
+        var feedback_id = {
+            {
+                feedback.feedback_id
+            }
+        };
+        var rating_html = '';
+        for (var i = 1; i <= 5; i++) {
+            if (i <= rating) {
+                rating_html += '<i class="fa-solid fa-star"></i>';
+            } else {
+                rating_html += '<i class="fa-regular fa-star"></i>';
+            }
+        }
+        $('.rating-' + feedback_id).html(rating_html); {
+            %
+            endfor %
+        }
+    })
+</script>
+{% endblock content %}

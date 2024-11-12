@@ -1,0 +1,202 @@
+{% extends 'customer/base.html' %}
+
+{% block content %}
+<div class="py-4">
+    <div class="container">
+        <h4 class="mb-4">Đánh giá đơn hàng 
+            <a class='color-blue' href="order-detail?order_id={{order.order_id}}">#{{order.order_id}}</a>
+        </h4>
+
+        {% for item in order.orderitem_set.all %}
+
+        {% if item.feedback %}
+        <div class="order-item card p-4 mb-4">
+            <div class="d-flex align-items-center gap-3 mb-3 color-green">
+                <i class="fa-regular fa-circle-check"></i>
+                <div class="ms-3">Đã đánh giá</div>
+            </div>
+            <div class="item-infor d-flex gap-3 mb-4">
+                <div class="image">
+                    <img src="{{item.product.productimage_set.first.name.url}}" alt="" width="100px" height='100px'>
+                </div>
+                <div class="infor">
+                    <div class="name">
+                        <p>Tên sản phẩm: {{item.product.name}}</p>
+                    </div>
+                    <div class="variant d-flex">
+                        Phân loại:  
+                        {% if item.type == '0' %}
+                            Sách mới
+                        {% else %}
+                            Sách cũ
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="feedback">
+                <div class="rating d-flex align-items-center gap-4 mb-3">
+                    <p class="m-0 fw-bold">Đánh giá</p>
+                    <div class="d-flex align-items-center rating-star-{{item.order_item_id}}">
+                    </div>
+                </div>
+                {% if item.feedback.feedbackimage_set.all %}
+
+                <div class="image mb-3">
+                    <div class="mb-3 fw-bold">Ảnh người dùng</div>
+                    {% for image in item.feedback.feedbackimage_set.all %}
+                    <img src="{{ image.name.url }}" alt="" style='width: 100px; height: 100px; object-fit:fill'>
+                    {% endfor %}
+
+                </div>
+                {% endif %}
+                <div class="comment d-flex gap-3">
+                    <div class="fw-bold">Bình luận</div>
+                    <div class="">
+                        {{item.feedback.comment}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="order-item card mb-2 p-4">
+            <div class="item-infor d-flex gap-3 mb-4">
+                <div class="image">
+                    <img src="{{item.product.productimage_set.first.name.url}}" alt="" width="100px" >
+                </div>
+                <div class="infor">
+                    <div class="name">
+                        <p>Tên sản phẩm: {{item.product.name}}</p>
+                    </div>
+                    <div class="variant d-flex">
+                        Phân loại: {{item.color}}, {{item.size}}
+                    </div>
+                </div>
+            </div>
+            <form action="{% url 'feedback' %}" method='POST' enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="order_item_id" value="{{item.order_item_id}}">
+                <div class="feedback">
+                    <div class="rating d-flex align-items-center gap-4 mb-3">
+                        <p class="m-0">Đánh giá</p>
+                        <div>
+                            <i class="fa-regular fa-star" data-rating="1"></i>
+                            <i class="fa-regular fa-star" data-rating="2"></i>
+                            <i class="fa-regular fa-star" data-rating="3"></i>
+                            <i class="fa-regular fa-star" data-rating="4"></i>
+                            <i class="fa-regular fa-star" data-rating="5"></i>
+                        </div>
+                        <div class="invalid color-red">
+                            Vui lòng chọn đánh giá
+                        </div>
+                    </div>
+                    <div class="image">
+                        <div class="mb-3 ">
+                            <label for="" class="form-label">Thêm ảnh</label>
+                            <input type="file" class="form-control" name="images" id="" placeholder="" aria-describedby="fileHelpId" multiple>
+                        </div>
+                    </div>
+                    <div class="comment">
+                        <div class="">
+                            <label for="" class="form-label">Bình luận</label>
+                            <textarea class="form-control" name="comment" id="" rows="3"></textarea>
+                        </div>
+                        <div class="invalid color-red">
+                            Vui lòng bình luận
+                        </div>
+                    </div>
+                    <div class="submit d-flex mt-3">
+                        <button type="submit" class="submit-feedback btn btn-primary">Gửi đánh giá</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+
+
+
+        <hr>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('.order-item .invalid').hide()
+        let rating;
+        let rating_star;
+        {% for item in order.orderitem_set.all %}
+        {% if item.feedback %}
+        rating = {{item.feedback.rating}};
+        rating_start = ''
+        for(let i = 1; i<= 5; i++) {
+            if(i <= rating) {
+                rating_start += '<i class="fa-solid fa-star"></i>'
+            } else {
+                rating_start += '<i class="fa-regular fa-star"></i>'
+            }
+        }
+        rating_start += '<div class="ms-3 color-red">('+rating+' sao)</div>'
+        $(".rating-star-{{item.order_item_id}}").html(rating_start)
+        {% endif %}
+        {% endfor %}
+
+        $(".rating i").click(function() {
+            var rating = $(this).data("rating");
+            $(".rating i").removeClass('active');
+            $(this).addClass('active');
+            $(this).closest('.rating').find('.invalid').hide()
+            for (let i = 1; i <= 5; i++) {
+                if (i <= rating) {
+                    $(".rating i:nth-child(" + i + ")").addClass("fa-solid");
+                    $(".rating i:nth-child(" + i + ")").removeClass("fa-regular");
+                } else {
+                    $(".rating i:nth-child(" + i + ")").removeClass("fa-solid");
+                    $(".rating i:nth-child(" + i + ")").addClass("fa-regular");
+                }
+            }
+        })
+
+        $('textarea[name="comment"]').keyup(function() {
+            let comment = $(this).val().trim();
+            if (comment == '') {
+                $(this).parents('.comment').find('.invalid').show();
+            } else {
+                $(this).parents('.comment').find('.invalid').hide();
+            }
+        })
+        
+        $('form').submit(function(e) {
+            e.preventDefault();
+            let order_item = $(this).parents('.order-item');
+            let rating = order_item.find('.rating i.active').data('rating');
+            let comment = order_item.find('textarea[name="comment"]').val();
+            let images = order_item.find('input[name="images"]')[0].files;
+            let isValid = true;
+            if (rating == undefined) {
+                order_item.find('.rating .invalid').show();
+                isValid = false;
+            } else {
+                order_item.find('.rating .invalid').hide();
+            }
+
+            if (comment == '') {
+                order_item.find('.comment .invalid').show();
+                isValid = false;
+            } else {
+                order_item.find('.comment .invalid').hide();
+            }
+
+            if (!isValid) {
+                return;
+            }
+            $(this).append('<input type="hidden" name="rating" value="' + rating + '">')
+            console.log($(this))
+            this.submit()
+
+        })
+    });
+</script>
+{% endblock content %}
