@@ -52,7 +52,12 @@
                         {% for post in page_obj %}
                         <tr class="cart-table-row align-items-center">
                             <td>
-                                <div>{{ post.title }}</div>
+                                <div class="d-flex align-items-center">
+                                    <img src="/app/media/{{post.image}}" alt="" class="cart-product-img" style="width: 64px;" />
+                                    <div class="cart-product-name text-center ms-2 title-product">
+                                        {{ post.title }}
+                                    </div>
+                                </div>
                             </td>
                             <td>
                                 <div class="">{{ post.category }}</div>

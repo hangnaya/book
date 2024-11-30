@@ -1519,7 +1519,8 @@ def addPost(request):
     error = ''
     categories = CategoryPost.objects.filter(is_active = 1)
     if request.method == 'POST':
-        form = PostForm(request.POST or None)
+        print(request.POST)
+        form = PostForm(request.POST or None, request.FILES)
         if form.is_valid():
             form.save()
             messages = "Thêm bài viết thành công"
@@ -1546,10 +1547,21 @@ def editPost(request):
         post_id = request.POST.get('post_id')
         post = get_object_or_404(Post, post_id=post_id)
         print(post_id, post.__dict__)
-        form = PostForm(request.POST, instance=post)
+        # form = PostForm(request.POST, instance=post)
+
+        # if form.is_valid():
+        #     form.save()
+        #     messages = "Cập nhật bài viết thành công"
+        # else:
+        #     error = 'Tên bài viết đã tồn tại'
+        form = PostForm(request.POST, request.FILES, instance=post)
 
         if form.is_valid():
-            form.save()
+            new_post = form.save(commit=False)
+            print(request.FILES)
+            if 'image' in request.FILES:
+                new_post.image = request.FILES['image']
+            new_post.save()
             messages = "Cập nhật bài viết thành công"
         else:
             error = 'Tên bài viết đã tồn tại'
@@ -1568,6 +1580,10 @@ def editPost(request):
 def deletePost(request):
     post_id = int(request.GET.get('post_id'))
     post = Post.objects.get(post_id=post_id)
+    if post.image:  # Kiểm tra xem trường image có giá trị hay không
+        image_path = post.image.path  # Lấy đường dẫn đến tệp ảnh
+        if os.path.exists(image_path):
+            os.remove(image_path) 
     post.delete()
     return JsonResponse({
         'success': True,

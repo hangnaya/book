@@ -49,6 +49,7 @@ class CouponForm(forms.ModelForm):
 
 class ProductForm(forms.ModelForm):
     category = forms.ModelChoiceField(queryset=Category.objects.all())
+    translator = forms.CharField(required=False)
 
     class Meta:
         model = Product
@@ -129,7 +130,7 @@ class ResponseForm(forms.Form):
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['name']
+        fields = ['name', 'parent_id']
     
     def clean_name(self):
         name = self.cleaned_data.get('name')
@@ -165,9 +166,16 @@ class CategoryPostForm(forms.ModelForm):
 
 class PostForm(forms.ModelForm):
     category = forms.ModelChoiceField(queryset=CategoryPost.objects.all())
+    image = forms.FileField(widget=forms.ClearableFileInput(
+        attrs={'multiple': True}))  # thêm thuộc tính multiple
     class Meta:
         model = Post
-        fields = ['title', 'content', 'author_name', 'category', 'is_active']
+        fields = ['title', 'content', 'author_name', 'category', 'is_active', 'image']
+
+    def __init__(self, *args, **kwargs):
+        # Tùy chọn này giúp trường 'name' không bắt buộc
+        super().__init__(*args, **kwargs)
+        self.fields['image'].required = False 
 
     def clean_is_active(self):
         # Lấy giá trị từ POST, mặc định là False nếu không tồn tại hoặc là '0'
