@@ -22,9 +22,14 @@ urlpatterns = [
     path('filter-product', views.getListProduct, name='list-product'),
     path('register', views.register, name='register'),
     path('order', views.order, name='order'),
+
+    # feedback
     path('feedback', views.handleFeedback, name='feedback'),
     path('list-feedback', views.getFeedback, name='list-feedback'),
     path('get-feedback', views.getFeedbackByProduct, name='get-feedback'),
+    path('react-feedback', views.ReactFeedbackByProduct, name='react-feedback'),
+    path('read-feedback', views.ReadFeedback, name='read-feedback'),
+
     path('list-coupon', views.getCoupon, name='list-coupon'),
     path('list-post', views.getPost, name='list-post'),
     path('post/<int:post_id>', views.postDetail, name='post-detail'),

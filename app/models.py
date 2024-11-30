@@ -83,6 +83,7 @@ class Feedback(models.Model):
     dislike     = models.IntegerField(default=0, blank=False, null=False)
     customer    = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False)
     product     = models.ForeignKey(Product, on_delete=models.CASCADE, blank=False, null=False)
+    is_read     = models.IntegerField(default=0, blank=False, null=False)
     
     def __str__(self):
         return f"{self.product} - {self.customer}"
@@ -186,6 +187,7 @@ class Notification(models.Model):
     content = models.CharField(max_length=255, blank=False, null=False)
     create_at = models.DateTimeField(default=timezone.datetime.now(), blank=False, null=False)
     customer = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=True)
+    is_read = models.IntegerField(default=0, blank=False, null=False)
 
 class VoucherWallet(models.Model):
     voucher_wallet_id = models.AutoField(primary_key=True, blank=False, null=False)

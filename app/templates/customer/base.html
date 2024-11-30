@@ -1,5 +1,5 @@
 {% load static %}
-
+{% load my_filters %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -38,94 +38,94 @@
     <link rel="stylesheet" href="{% static '/css/style.css' %}" />
     <link rel="stylesheet" href="{% static '/css/lightslider.css' %}" />
     <script src="{% static '/js/lightslider.js' %}"></script>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 
 <body>
     <div class="header">
         <div class="header-main">
             <div class="container ps-2">
-                <div class="row d-flex justify-content-between align-items-center">
-                    <div class="col-lg-auto col-4" style='min-width: 44px;'>
-                        <a href="/home" class="navbar-brand"><img src="/app/media/images/logo.png" width='50px'></a>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style='min-width: 44px;'>
+                        <a href="/" class="navbar-brand">
+                            <img class="logo-website" src="/app/media/images/logo.png" width='50px'>
+                        </a>
                     </div>
-                    <div class="col-lg-auto order-lg-last col-8">
+                    <!-- Search -->
+                    <div class="mx-3 search-group col-xl-8 col-lg-7 col-6">
+                        <form action="/list-product" class="d-flex position-relative justify-content-center align-items-center" role="search">
+                            <input type="text" class="form-control shadow-none search-input" name='search' type="search" placeholder="Tìm kiếm" />
+                            <div class="search-btn" type="submit">
+                                <i class="fa fa-search"></i>
+                            </div>
+                        </form>
+                    </div>
+                    <div>
                         <div class="d-flex float-end gap-4" >
 
                             {% if user.is_authenticated %}
                             <!-- Thông báo-->
-                            <div class="position-relative notification">
-                                <a href="" class="header-nav-item ms-4 position-relative">
-                                    <i class="fa-solid fa-bell">
-                                    </i>
-                                    <span class="badge bg-danger position-absolute">3</span>
+                            <div class="position-relative notification notification-navbar">
+                                <a href="" class="header-nav-item position-relative">
+                                    <i class="far fa-bell"></i>
+                                    <span class="badge bg-danger position-absolute">{{ totalNotiUnread }}</span>
                                 </a>
                                 <div class="notification-list position-absolute">
-                                    <div class="px-3 py-2 fw-medium">Thông báo mới nhất</div>
+                                    <div class="px-3 py-2 fw-bold noti-title">Thông báo mới nhất</div>
                                     <hr class="my-1">
-                                    <div class="notification-item px-3 py-1 mb-2">
-                                        <a href="">
-                                            <div class="row align-items-center">
-                                                <div class="col-3">
-                                                    <img src="../assets/image/shirt.jpg" alt="" width="40px">
+                                    {% if not notificationsNewest %}
+                                        <h6 class="text-center">Không có thông báo!</h6>
+                                    {% else %}
+                                        {% for notification in notificationsNewest %}
+                                            <a href="/order-detail?order_id={{ notification.content|extract_order_id }}">
+                                                <div class="notification-item alert-notification">
+                                                    <div class="notification-content">
+                                                        {{ notification.content }}
+                                                        {% if notification.is_read == 0 %}
+                                                            <span class="badge badge-danger">Mới</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="notification-date">{{ notification.create_at|date:"H:i:s  d/m/Y" }}</div>
                                                 </div>
-                                                <div class="col-9 text-container ps-0">
-                                                    Voucher khủng áp dụng từ 20/5/2023
-
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div class="notification-item px-3 py-1 mb-2">
-                                        <a href="">
-                                            <div class="row align-items-center">
-                                                <div class="col-3">
-                                                    <img src="../assets/image/shirt.jpg" alt="" width="40px">
-                                                </div>
-                                                <div class="col-9 text-container ps-0">
-                                                    Đơn hàng #5 đã được giao thành công
-
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div class="notification-item px-3 py-1 mb-2">
-                                        <a href="">
-                                            <div class="row align-items-center">
-                                                <div class="col-3">
-                                                    <img src="../assets/image/shirt.jpg" alt="" width="40px">
-                                                </div>
-                                                <div class="col-9 text-container ps-0">
-                                                    Voucher khủng áp dụng từ 20/5/2023
-
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div class="notification-item px-3 py-2 text-center">
-                                        <a href="/notification">
-                                            Xem tất cả
-                                        </a>
-                                    </div>
+                                            </a>
+                                        {% endfor %}
+                                        <div class="notification-item px-3 py-2 text-center">
+                                            <a href="/notification">
+                                                Xem tất cả
+                                            </a>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <!-- Giỏ hàng-->
-                            <a href="/cart" class="header-nav-item position-relative">
-                                <i class="fa-solid fa-cart-shopping"></i>
+                            <a href="/cart" class="header-nav-item position-relative cart-navbar">
+                                <i class="fas fa-shopping-cart"></i>
                                 <span class="badge bg-danger position-absolute cart">{{request.COOKIES.num_cart_item }}</span>
-    
-                                <!-- <span
-                                class="badge position-absolute translate-middle bg-danger start-80"
-                                >5</span
-                              > -->
                             </a>
                             <div class="header-nav-item header-user d-flex">
                                 <img class="header-img-user" src="{{user.avatar.url}}" alt="">
                                 <p class="">{{user.username}}</p>
                                 <div class="header-user__list-option d-flex flex-column">
                                     <a class="header-user__option" href="/profile">
+                                        <i class="far fa-user-circle"></i>
                                         <p>Tài khoản của tôi</p>
                                     </a>
+                                    <a class="header-user__option" href="/get-order">
+                                        <i class="fas fa-clipboard-list"></i>
+                                        <p>Đơn hàng</p>
+                                    </a>
+                                    <a class="header-user__option" href="/list-feedback">
+                                        <i class="fas fa-comments"></i>
+                                        <p>Đánh giá</p>
+                                    </a>
+                                    <a href="/cart" class="header-user__option">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        <p>Giỏ hàng <span class="badge bg-danger cart">{{request.COOKIES.num_cart_item }}</span></p>
+                                    </a>
                                     <a class="header-user__option" href="/logout">
+                                        <i class="fas fa-sign-out-alt"></i>
                                         <p>Đăng xuất</p>
                                     </a>
                                 </div>
@@ -135,21 +135,12 @@
 
                             <a href="/login" class='btn btn-primary login'>
                                 Đăng nhập
+                                <i class="fas fa-sign-in-alt"></i>
                             </a>
 
                             {% endif %}
 
                         </div>
-                    </div>
-    
-                    <!-- Search -->
-                    <div class="col-lg-6 col-12">
-                        <form action="/list-product" class="d-flex position-relative justify-content-center align-items-center" role="search">
-                            <input type="text" class="form-control shadow-none search-input" name='search' type="search" placeholder="Search" />
-                            <div class="search-btn" type="submit">
-                                <i class="fa fa-search"></i>
-                            </div>
-                        </form>
                     </div>
                 </div>
             </div>
@@ -157,30 +148,73 @@
     </div>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
-        <div class="container p-0">
-            <button class="navbar-toggler">
+        <div class="container p-0 navbar-close">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
-            </button>
+              </button>
 
-            <div class="navbar-collapse collapse">
+            <div class="navbar-collapse collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav">
-                    <li class="nav-item .active">
-                        <a href="/home" class="nav-link pe-5"><span class="nav-content">Trang chủ</span></a>
+                    <li class="nav-item dropdown">
+                        <a href="/list-product?category=1" class="nav-link pe-5">
+                            <span class="nav-content">
+                                <i class="fas fa-book"></i> 
+                                Văn học
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% for category in categories %}
+                                {% if category.parent_id == 1 %}
+                                    <li><a href="/list-product?category=1&subcate={{ category.category_id }}" class="dropdown-item">{{ category.name }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a href="/list-product?category=2" class="nav-link pe-5">
+                            <span class="nav-content"><i class="fas fa-globe"></i> Kinh tế</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% for category in categories %}
+                                {% if category.parent_id == 2 %}
+                                    <li><a href="/list-product?category=2&subcate={{ category.category_id }}" class="dropdown-item">{{ category.name }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a href="/list-product?category=3" class="nav-link pe-5">
+                            <span class="nav-content"><i class="fas fa-child"></i> Sách thiếu nhi</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% for category in categories %}
+                                {% if category.parent_id == 3 %}
+                                    <li><a href="/list-product?category=3&subcate={{ category.category_id }}" class="dropdown-item">{{ category.name }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a href="/list-product?category=4" class="nav-link pe-5">
+                            <span class="nav-content"><i class="fas fa-file"></i> Giáo khoa - Tham khảo</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% for category in categories %}
+                                {% if category.parent_id == 4 %}
+                                    <li><a href="/list-product?category=4&subcate={{ category.category_id }}" class="dropdown-item">{{ category.name }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
                     </li>
                     <li class="nav-item">
-                        <a href="/list-product" class="nav-link pe-5"><span class="nav-content">Sản phẩm</span></a>
+                        <a href="/list-coupon" class="nav-link pe-5">
+                            <span class="nav-content"><i class="fas fa-percent"></i> Mã giảm giá</span>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/get-order" class="nav-link pe-5"><span class="nav-content">Đơn hàng</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/list-feedback" class="nav-link pe-5"><span class="nav-content">Đánh giá</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/list-coupon" class="nav-link pe-5"><span class="nav-content">Khuyến mãi</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/list-post" class="nav-link pe-5"><span class="nav-content">Tin tức</span></a>
+                        <a href="/list-post" class="nav-link pe-5">
+                            <span class="nav-content"><i class="far fa-newspaper"></i> Tin tức</span>
+                        </a>
                     </li>
                 </ul>
             </div>
@@ -206,21 +240,13 @@
         <div class=" container">
             <div class="row justify-content-between">
                 <div class="col-4">
-                    <h5>Shop</h5>
-                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Alias corporis, ratione ullam, obcaecati autem eius quae vero accusantium, tenetur eveniet voluptatum labore minus accusamus asperiores corrupti harum aliquam debitis! Asperiores.</p>
+                    <h5>BOOKSTORE</h5>
+                    <p>BOOKSTORE nhận đặt hàng trực tuyến và giao hàng tận nơi. KHÔNG hỗ trợ đặt mua và nhận hàng trực tiếp tại văn phòng cũng như tất cả Hệ Thống BookStore trên toàn quốc.</p>
                 </div>
                 <div class="col-auto">
                     <h5>Về Shop</h5>
                     <div class="d-flex flex-column">
                         <a href="">Giới thiệu</a>
-                        <a href="">Điều khoản</a>
-                        <a href="">Chính sách</a>
-                        <a href="">Tuyển dụng</a>
-                    </div>
-                </div>
-                <div class="col-auto">
-                    <h5>Liên hệ</h5>
-                    <div class="d-flex flex-column">
                         <a href=""><i class="fa-brands fa-facebook me-2"></i>Facebook</a>
                         <a href=""><i class="fa-brands fa-instagram me-2"></i>Instagram</a>
                         <a href=""><i class="fa-brands fa-tiktok me-2"></i></i>Tiktok</a>
@@ -233,16 +259,15 @@
                         <a href="">Hướng dẫn mua hàng</a>
                         <a href="">Thanh toán</a>
                         <a href="">Vận chuyển</a>
-                        <a href="">Bảo hành</a>
+                        <a href="">Bảo hành</a> 
                     </div>
                 </div>
                 <div class="col-auto">
-                    <h5>Thanh toán</h5>
+                    <h5>Liên hệ</h5>
                     <div class="d-flex flex-column">
-                        <a href="">Giới thiệu</a>
-                        <a href="">Điều khoản</a>
-                        <a href="">Chính sách</a>
-                        <a href="">Tuyển dụng</a>
+                        <p><i class="fas fa-map-marker-alt"></i> Trần Phú, Hà Đông, Hà Nội</p>
+                        <p><i class="fas fa-phone-square"></i> 0374667394</p>
+                        <p><i class="fas fa-envelope"></i> hanayaa811@gmail.com</p>
                     </div>
                 </div>
             </div>

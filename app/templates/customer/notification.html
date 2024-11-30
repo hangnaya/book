@@ -1,5 +1,5 @@
 {% extends 'customer/base.html' %}
-
+{% load my_filters %}
 {% block content %}
 
 <div class="py-4">
@@ -7,7 +7,23 @@
         <h4 class='mb-3'>Thông báo</h4>
 
         <div class="card p-4">
-            
+            {% if not notifications %}
+                <h5 class="text-center">Không có thông báo!</h5>
+            {% else %}
+                {% for notification in notifications %}
+                    <a href="/order-detail?order_id={{ notification.content|extract_order_id }}">
+                        <div class="card-notification">
+                            <div class="noti-content">
+                                {% if notification.is_read == 0 %}
+                                    <span class="badge badge-danger">Mới</span>
+                                {% endif %}
+                                {{ notification.content }}
+                            </div>
+                            <div>{{ notification.create_at|date:"H:i:s  d/m/Y" }}</div>
+                        </div>
+                    </a>
+                {% endfor %}
+            {% endif %}
         </div>
     </div>
 </div>

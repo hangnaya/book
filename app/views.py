@@ -121,7 +121,7 @@ def home(request):
 
     top_selling_products = products.order_by('-total_sold')[:10]
 
-    top_sale_products = products.order_by('-sale')[:10]
+    top_sale_products = products.filter(sale__gt=0).order_by('-sale')[:10]
 
     hot_selling_product = (products.filter(orderitem__order__date__month=now.month,
                                            orderitem__order__date__year=now.year)
@@ -688,6 +688,41 @@ def getFeedbackByProduct(request):
     respone.data['total_page'] = paginator.page.paginator.num_pages
     return respone
 
+@api_view(['POST'])
+def ReactFeedbackByProduct(request):
+    type = int(request.POST.get('type'))
+    action = int(request.POST.get('action'))
+    feedback_id = int(request.POST.get('feedback_id'))
+    feedback = get_object_or_404(Feedback, feedback_id=feedback_id)
+
+    if type == 1:
+        if action == 1:
+            feedback.like += 1
+        elif action == 2:
+            feedback.like -= 1
+        elif action == 3:
+            feedback.like += 1
+            feedback.dislike -= 1
+    elif type == 2:
+        if action == 1:
+            feedback.dislike += 1
+        elif action == 2:
+            feedback.dislike -= 1
+        elif action == 3:
+            feedback.dislike += 1
+            feedback.like -= 1
+    
+    feedback.save()
+    return JsonResponse({'status': 'true'})
+
+@api_view(['POST'])
+def ReadFeedback(request):
+    feedback_id = int(request.POST.get('feedback_id'))
+    feedback = get_object_or_404(Feedback, feedback_id=feedback_id)
+    feedback.is_read = 1
+    feedback.save()
+    return JsonResponse({'status': 'true'})
+
 
 def getCoupon(request):
     coupons = Coupon.objects.filter(start_date__lte=timezone.now(), end_date__gte=timezone.now()).order_by(
@@ -795,7 +830,8 @@ def updateStatus(request):
     return JsonResponse({'status': 'true'})
 
 def notification(request):
-    return render(request, 'customer/notification.html')
+    notifications = Notification.objects.filter(customer=request.user).all().order_by('is_read', '-create_at')
+    return render(request, 'customer/notification.html', {'notifications' : notifications})
 
 
 @login_required(login_url='/login')
@@ -1111,12 +1147,27 @@ def getOrderDetail(request):
     price_order = order_items.aggregate(total_sum=Sum('total'))['total_sum']
     if request.method == "POST":
         status = int(request.POST.get('status'))
-        if order.status.order_status_id != status:
+        if order.status.order_status_id != status and status != 7:
             status = OrderStatus.objects.get(order_status_id=status)
             order.status = status
             order.save()
             tracking = Tracking(order=order, order_status=status)
             tracking.save()
+            if status.order_status_id == 2:
+                status_text = f"Đơn hàng #{order.order_id} đã được người bán xác nhận"
+            elif status.order_status_id == 3:
+                status_text = f"Đơn hàng #{order.order_id} đã được giao cho đơn vị vận chuyển"
+            elif status.order_status_id == 4:
+                status_text = f"Đơn hàng #{order.order_id} đang được giao đến quý khách"
+            elif status.order_status_id == 5:
+                status_text = f"Đơn hàng #{order.order_id} đã được hủy thành công"
+            else:
+                status_text = f"Đơn hàng #{order.order_id} đã được giao thành công"
+            notification = Notification.objects.create(
+                content=status_text,
+                create_at=timezone.now(),
+                customer=order.customer
+            )
         else:
             pass
     if order.status.order_status_id == 1:
