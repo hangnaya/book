@@ -46,15 +46,43 @@
         <div class="header-main">
             <div class="row d-flex justify-content-between align-items-center px-5">
                 <div class="col-auto">
-                    <a href="/admin_orders" class="navbar-brand"><img src="/app/media/images/logo.png" width="44"></a>
+                    <a href="/admin_orders" class="navbar-brand">
+                        <img src="/app/media/images/logo.png" width="100" style="border-radius: 12px;">
+                    </a>
                 </div>
                 <div class="col-auto order-last">
                     <div class="d-flex float-end">
-                        <a href="" class="header-nav-item ms-4 position-relative">
-                            <i class="fa-solid fa-bell">
-                            </i>
-                            <span class="badge bg-danger position-absolute">3</span>
-                        </a>
+                        <div class="position-relative notification notification-navbar alert-icon">
+                            <a href="javascript:void()" class="header-nav-item position-relative">
+                                <i class="fa-solid fa-bell"></i>
+                                <span class="badge bg-danger position-absolute">{{ totalNotiUnreadAdmin }}</span>
+                            </a>
+                            <div class="notification-list position-absolute">
+                                <div class="px-3 py-2 fw-bold noti-title">Thông báo mới nhất</div>
+                                <hr class="my-1">
+                                <div class="noti-content-list">
+                                    {% if not notificationsAdmin %}
+                                    <h6 class="text-center">Không có thông báo!</h6>
+                                    {% else %}
+                                        {% for notification in notificationsAdmin %}
+                                            <a class="admin-noti-item" href="javascript:void()" data-id="{{notification.feedback_id}}" data-href="/product-detail?product_id={{ notification.product_id }}&comment_id={{notification.feedback_id}}">
+                                                <div class="notification-item alert-notification">
+                                                    <div class="notification-content">
+                                                        Người dùng <span class="text-bold">{{ notification.customer.name }}</span> 
+                                                        đã bình luận về sản phẩm 
+                                                        <span class="text-bold">{{ notification.product.name }}</span>
+                                                        {% if notification.is_read == 0 %}
+                                                            <span class="badge badge-danger">Mới</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="notification-date">{{ notification.date|date:"H:i:s  d/m/Y" }}</div>
+                                                </div>
+                                            </a>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
 
                         <div href="" class="header-nav-item header-user ms-4 d-flex">
                             <img class="header-img-user" src="{{user.avatar.url}}" alt="">
@@ -86,6 +114,17 @@
     <nav class="navbar navbar-vertical">
         <ul class="navbar-nav">
             <div class="navbar-option">
+                <li class="nav-item .active">
+                    <a href="/dashboard" class="nav-link pe-5 ">
+                        <div class='d-flex justify-content-between align-items-center'>
+                            <span class="nav-content">
+                                <i class="fa fa-bar-chart nav-content" aria-hidden="true"></i>
+                                Thống kê
+                            </span>
+                            <i class="fa-solid fa-angle-right nav-content"></i>
+                        </div>
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a href="/categories" class="nav-link pe-5 active">
                         <div class='d-flex justify-content-between align-items-center'>
@@ -165,17 +204,6 @@
                         </div>
                     </a>
                 </li>
-                <li class="nav-item .active">
-                    <a href="/report" class="nav-link pe-5 ">
-                        <div class='d-flex justify-content-between align-items-center'>
-                            <span class="nav-content">
-                                <i class="fa fa-bar-chart nav-content" aria-hidden="true"></i>
-                                Thống kê
-                            </span>
-                            <i class="fa-solid fa-angle-right nav-content"></i>
-                        </div>
-                    </a>
-                </li>
             </div>
 
             <div class="log-out">
@@ -201,7 +229,28 @@
 <script type="text/javascript">
     // Đảm bảo rằng CKEditor được áp dụng vào các trường textarea
     CKEDITOR.replace('content');
+    $(document).ready(function() {
+        $('.admin-noti-item').click(function() {
+            let feedback_id = $(this).data('id');
+            let url = $(this).data('href');
 
+            $.ajax({
+                url: '/read-feedback',
+                method: 'post',
+                data: {
+                    'feedback_id': feedback_id,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    console.warn(response);
+                    window.location.href = url;
+                }, error: function(error) {
+                    console.log(error);
+                    window.location.href = url;
+                }
+            })
+        })
+    })
 </script>
 </body>
 

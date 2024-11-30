@@ -32,6 +32,8 @@ from datetime import timedelta
 import logging
 from django.db.models import Avg
 from django.contrib import messages
+import csv
+from django.http import HttpResponse
 
 def convert_diff(diff):
     days_in_month = 30
@@ -72,15 +74,15 @@ def log_in(request):
         if user is not None:
             login(request, user)
             if user.is_superuser:
-                return redirect('/admin_orders')
-            return redirect('/home')
+                return redirect('/dashboard')
+            return redirect('/')
         else:
             return render(request, 'customer/login.html', {'error': 'Tên đăng nhập hoặc mật khẩu không đúng'})
 
 
 def log_out(request):
     logout(request)
-    return redirect('/home')
+    return redirect('/')
 
 
 def register(request):
@@ -1136,47 +1138,87 @@ def getOrderDetail(request):
 
 @login_required(login_url='/login')
 def report(request):
-    if request.method == "POST":
-        columns = []
-        values = []
-        type_report = request.POST.get('type_report', 1)
-        start_date = request.POST.get('start_date', '')
-        end_date = request.POST.get('end_date', '')
-        if start_date == '':
-            start_date = timezone.datetime(2020, 1, 1)
-        if end_date == '':
-            end_date = timezone.datetime(2050, 12, 31)
-        if type_report == '1':
-            report = Order.objects.filter(date__gte=start_date, date__lte=end_date).annotate(
-                month=TruncMonth('date')).values('month').annotate(revenue=Sum('total')).values(
-                'month', 'revenue').order_by('month')
-            for record in report:
-                record['month'] = record['month'].strftime('%m %Y').split()
-                record['month'] = 'Tháng ' + record['month'][0] + ' năm ' + record['month'][1]
-                columns.append(record['month'])
-                values.append(int(record['revenue']))
-            report_name = 'Báo cáo doanh thu theo tháng'
-        elif type_report == '2':
-            report = Order.objects.filter(date__gte=start_date, date__lte=end_date, status_id=7).annotate(
-                month=TruncMonth('date')).values('month').annotate(order_total=Count('order_id')).values(
-                'month', 'order_total').order_by('month')
-            for record in report:
-                record['month'] = record['month'].strftime('%m %Y').split()
-                record['month'] = 'Tháng ' + record['month'][0] + ' năm ' + record['month'][1]
-                columns.append(record['month'])
-                values.append(record['order_total'])
-            report_name = 'Báo cáo đơn hàng'
-        else:
-            report = Order.objects.filter(date__gte=start_date, date__lte=end_date, status_id=7).select_related(
-                'customer').values('customer__name').annotate(total=Sum('total')).order_by('total')
-            for record in report:
-                columns.append(record['customer__name'])
-                values.append(record['total'])
-            report_name = 'Báo cáo khách hàng'
-        return render(request, 'admin_shop/report.html',
-                      {'values': values, 'columns': columns, 'report_name': report_name})
-    else:
-        return render(request, 'admin_shop/report.html')
+    columns = []
+    valuesRevenue = []
+    valuesCount = []
+    columnsTopCustomer = []
+    valuesTopCustomer = []
+    columnsTopProduct = []
+    valuesTopProduct = []
+    type_report = request.GET.get('type_report', '1')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    startDate = start_date
+    endDate = end_date
+    if start_date == '':
+        start_date = timezone.datetime(2020, 1, 1)
+    if end_date == '':
+        end_date = timezone.datetime(2050, 12, 31)
+
+    # Báo cáo doanh thu, đơn hàng theo tháng
+    report_name1 = 'Báo cáo doanh thu theo tháng (VNĐ)'
+    report_name2 = 'Báo cáo tổng đơn hàng theo tháng (Đơn)'
+    report = Order.objects.filter(date__gte=start_date, date__lte=end_date).exclude(status_id=5).annotate(
+        month=TruncMonth('date')).values('month').annotate(revenue=Sum('total')).values(
+        'month', 'revenue').order_by('month')
+    for record in report:
+        record['month'] = record['month'].strftime('%m %Y').split()
+        record['month'] = record['month'][0] + '/' + record['month'][1]
+        columns.append(record['month'])
+        valuesRevenue.append(int(record['revenue']))
+
+    reportCount = Order.objects.filter(date__gte=start_date, date__lte=end_date).exclude(status_id=5).annotate(
+        month=TruncMonth('date')).values('month').annotate(order_total=Count('order_id')).values(
+        'month', 'order_total').order_by('month')
+    for record2 in reportCount:
+        valuesCount.append(record2['order_total'])
+
+    
+    # Báo cáo top khách hàng mua nhiều
+    report_name_top_customer = 'Báo cáo top 5 khách hàng chi tiêu nhiều nhất'
+    reportTopCustomer = (
+        Order.objects.filter(date__gte=start_date, date__lte=end_date).exclude(status_id=5)
+        .select_related('customer')
+        .values('customer__id', 'customer__name', 'customer__username')
+        .annotate(total=Sum('total'))
+        .order_by('-total')[:5]
+    )
+
+    for record3 in reportTopCustomer:
+        columnsTopCustomer.append(record3['customer__name'] + " (" + record3['customer__username'] + ")")
+        valuesTopCustomer.append(record3['total'])
+
+    # Báo cáo top khách hàng mua nhiều
+    report_name_top_product = 'Báo cáo top 5 sản phẩm bán chạy nhất'
+    reportTopProduct = (
+        OrderItem.objects.filter(order__date__gte=start_date, order__date__lte=end_date).exclude(order__status_id=5)
+        .values('product__name')
+        .annotate(total_quantity=Sum('quantity'))
+        .order_by('-total_quantity')[:5]
+    )
+
+    for record4 in reportTopProduct:
+        columnsTopProduct.append(record4['product__name'])
+        valuesTopProduct.append(record4['total_quantity'])
+
+    return render(request, 'admin_shop/report.html',
+        {   
+            'report_name1': report_name1,
+            'report_name2': report_name2,
+            'columns': columns, 
+            'valuesRevenue': valuesRevenue,
+            'valuesCount': valuesCount,
+            'report_name_top_customer': report_name_top_customer,
+            'columnsTopCustomer': columnsTopCustomer,
+            'valuesTopCustomer': valuesTopCustomer,
+            'report_name_top_product': report_name_top_product,
+            'columnsTopProduct': columnsTopProduct,
+            'valuesTopProduct': valuesTopProduct,
+            'type_report': type_report,
+            'startDate': startDate,
+            'endDate': endDate,
+        }
+    )
 
 
 @login_required(login_url='/login')
@@ -1247,7 +1289,7 @@ def viewProfile(request):
                 'time': time
             }
     else:
-        return redirect('/home')
+        return redirect('/')
     return render(request, 'admin_shop/customer/profile.html', context=context)
 
 @login_required(login_url='/login')
@@ -1480,3 +1522,42 @@ def deletePost(request):
         'success': True,
         'message': "bài viết đã được xóa thành công"
     })
+def export_orders(request):
+    start_date = request.GET.get('startDate')
+    end_date = request.GET.get('endDate')
+
+    filename = "Bao_cao_doanh_thu.csv"
+    if start_date and end_date:
+        filename = f"Bao_cao_doanh_thu_tu_ngay_{start_date}_den_{end_date}.csv"
+    elif start_date:
+        filename = f"Bao_cao_doanh_thu_tu_ngay_{start_date}.csv"
+    elif end_date:
+        filename = f"Bao_cao_doanh_thu_den_ngay_{end_date}.csv"
+
+    orders = Order.objects.all().order_by('order_id')
+    if start_date and end_date:
+        orders = orders.filter(date__gte=start_date, date__lte=end_date)
+
+    orders = orders.values(
+        'order_id', 'date', 'discount', 'shipping', 'total',
+        'status__name', 'payment_method', 'receiver', 'phone', 'address'
+    )
+
+    # Tạo file CSV như trước
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response.write('\ufeff')
+
+    writer = csv.writer(response)
+    writer.writerow(['Mã đơn hàng', 'Ngày đặt hàng', 'Tổng tiền',
+                     'Trạng thái', 'Phương thức thanh toán', 'Khách hàng', 'Số điện thoại', 'Địa chỉ'])
+
+    for order in orders:
+        formatted_date = order['date'].strftime("%H:%M:%S %d/%m/%Y") if isinstance(order['date'], datetime) else order['date']
+        formatted_total = f"{order['total']:,.0f} VNĐ".replace(',', '.')
+        writer.writerow([
+            order['order_id'], formatted_date, formatted_total, order['status__name'],
+            order['payment_method'], order['receiver'], order['phone'], order['address']
+        ])
+
+    return response

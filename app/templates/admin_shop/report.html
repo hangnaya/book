@@ -2,44 +2,55 @@
 {% extends 'admin_shop/base.html' %}
 
 {% block content %}
-    <form action="/report" method="post">
-        {% csrf_token %}
+    <form action="/dashboard" method="get">
         <div class="content">
             <div class="report">
                 <h4 class="my-4">Thống kê</h4>
                 <div class="content-body">
                     <div class="row justify-content-between">
                         <div class="col-auto d-flex gap-1 align-items-center gap-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <label for="" class="form-label m-0">Loại</label>
+                            <!-- <div class="d-flex align-items-center gap-2">
+                                <label for="" class="form-label m-0">Loại: </label>
                                 <select class="form-select" name="type_report" id="type_report">
-                                    <option selected value="1">Thống kê doanh thu</option>
-                                    <option value="2">Thống kê đơn hàng</option>
-                                    <option value="3">Thống kê khách hàng</option>
-                                </select>
-
-                            </div>
+                                    <option {% if type_report == '1' %} selected {% endif %} value="1">Thống kê doanh thu</option>
+                                    <option {% if type_report == '2' %} selected {% endif %} value="2">Thống kê đơn hàng</option>
+                                    <option {% if type_report == '3' %} selected {% endif %} value="3">Thống kê khách hàng</option>
+                                </select
+                            </div> -->
 
                             <div class="d-flex align-items-center gap-2">
                                 <label for="filter-start-date" class="form-label m-0">Từ</label>
-                                <input type="date" class="form-control" name="start_date" id="filter-start-date" aria-describedby="helpId" placeholder="">
+                                <input value="{{ startDate }}" type="date" class="form-control" name="start_date" id="filter-start-date" aria-describedby="helpId" placeholder="">
                             </div>
 
                             <div class="d-flex align-items-center gap-2">
                                 <label for="filter-end-date" class="form-label m-0">Đến</label>
-                                <input type="date" class="form-control" name="end_date" id="filter-end-date" aria-describedby="helpId" placeholder="">
+                                <input value="{{ endDate }}" type="date" class="form-control" name="end_date" id="filter-end-date" aria-describedby="helpId" placeholder="">
                             </div>
                             <button class="btn btn-primary ms-2 d-flex align-items-center px-3" type="submit">
                                 Thống kê
                             </button>
-
+                            <a class="btn btn-success ms-2 d-flex align-items-center px-3" 
+                                id="export-btn" 
+                                href="#">
+                                <i class="far fa-file-excel"></i> <span class="px-1"> Export</span>
+                            </a>
                         </div>
                     </div>
-
                     <div class="chart my-5">
-                        <canvas class="chart-statics"></canvas>
+                        <canvas class="chart-statics" style="width: 100%;"></canvas>
+                        <h3 class="title-chart">Biểu đồ doanh thu / đơn hàng</h3>
                     </div>
-
+                    <div class="top-report my-5">
+                        <div class="top-customer">
+                            <canvas class="chart-statics-top-customer" width="400" height="400"></canvas>
+                            <h3 class="title-chart">Top 5 khách hàng chi tiêu nhiều nhất</h3>
+                        </div>
+                        <div class="top-product">
+                            <canvas class="chart-statics-top-product" width="400" height="400"></canvas>
+                            <h3 class="title-chart">Top 5 sản phẩm bán chạy nhất</h3>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -50,39 +61,166 @@
     <script>
         // Khai báo biến report_name ở phạm vi toàn cục
         {% comment %} var ctx = document.getElementById('chart-statics').getContext('2d'); {% endcomment %}
-        var report_name = "{{ report_name | safe }}";
+        var report_name1 = "{{ report_name1 | safe }}";
+        var report_name2 = "{{ report_name2 | safe }}";
+        var report_name_top_customer = "{{ report_name_top_customer | safe }}";
+        var report_name_top_product = "{{ report_name_top_product | safe }}";
         var month = {{columns | safe}}
-        var revenues = {{values | safe}}
+        var revenues = {{valuesRevenue | safe}}
+        var countOrder = {{valuesCount | safe}}
+        var columnsTopCustomer = {{columnsTopCustomer | safe}}
+        var valuesTopCustomer = {{valuesTopCustomer | safe}}
+        var columnsTopProduct = {{columnsTopProduct | safe}}
+        var valuesTopProduct = {{valuesTopProduct | safe}}
+
         $(document).ready(function() {
+            $('#export-btn').on('click', function(e){
+                e.preventDefault();
+                let startDate = $('#filter-start-date').val();
+                let endDate = $('#filter-end-date').val();
+                const exportUrl = `{% url 'export_orders' %}?startDate=${startDate}&endDate=${endDate}`;
+                window.location.href = exportUrl;
+            });
+
+            const today = new Date().toISOString().split('T')[0];
+            $('#filter-end-date').attr('max', today);
+            $('#filter-start-date').attr('max', today);
+
+            $('#filter-start-date').on('change', function () {
+                const startDate = $(this).val();
+                const endDate = $('#filter-end-date').val();
+                if (endDate && endDate < startDate) {
+                    $('#filter-end-date').val('');
+                }
+                $('#filter-end-date').attr('min', startDate);
+            });
+
+            $('#filter-end-date').on('change', function () {
+                const endDate = $(this).val();
+                const startDate = $('#filter-start-date').val();
+                if (startDate && endDate < startDate) {
+                    $('#filter-start-date').val('');
+                }
+                $('#filter-start-date').attr('max', endDate);
+            });
+
             var chartData = {
                 labels: month,
-                datasets: [{
-                    label: report_name,
-                    data: revenues,
-                    backgroundColor: '#007bff',
-                    borderColor: '#007bff',
-                    borderWidth: 1,
-                    fill: false
-                }]
+                datasets: [
+                    {
+                        label: report_name1,
+                        data: revenues,
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)'
+                        ],
+                        borderWidth: 2,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: report_name2,
+                        data: countOrder,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)'
+                        ],
+                        borderWidth: 2,
+                        yAxisID: 'y2'
+                    }
+                ]
             };
 
             // Tạo biểu đồ với jQuery Chart.js
             new Chart($('.chart-statics'), {
-                type: 'line',
+                type: 'bar',
                 data: chartData,
                 options: {
                     responsive: true,
-                    title: {
-                        display: true,
-                        text: report_name
-                    },
                     scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true
-                            }
-                        }]
+                    y1: {
+                        type: 'linear', // Trục tuyến tính
+                        position: 'left', // Trục bên trái
+                        beginAtZero: true,
+                        ticks: {
+                            color: 'rgba(54, 162, 235, 1)' // Màu giá trị trục
+                        }
+                    },
+                    y2: {
+                        type: 'linear', // Trục tuyến tính
+                        position: 'right', // Trục bên phải
+                        beginAtZero: true,
+                        ticks: {
+                            color: 'rgba(255, 99, 132, 1)' // Màu giá trị trục
+                        },
+                        grid: {
+                            drawOnChartArea: false // Không vẽ lưới cho trục Y2
+                        }
                     }
+                },
+                }
+            });
+
+            // top customer 
+            var chartDataTopCustomer = {
+                labels: columnsTopCustomer,
+                datasets: [
+                    {
+                        label: report_name_top_customer,
+                        data: valuesTopCustomer,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 1)',  // Màu đỏ tươi
+                            'rgba(54, 162, 235, 1)',  // Màu xanh dương
+                            'rgba(255, 206, 86, 1)',  // Màu vàng
+                            'rgba(75, 192, 192, 1)',  // Màu xanh lá cây
+                            'rgba(153, 102, 255, 1)' 
+                        ],
+                        borderColor: [
+                             '#FFFFFF'
+                        ],
+                        borderWidth: 2,
+                    }
+                ]
+            };
+
+            new Chart($('.chart-statics-top-customer'), {
+                type: 'pie',
+                data: chartDataTopCustomer,
+                options: {
+                    responsive: true,
+                }
+            });
+
+            // top product 
+            var chartDataTopProduct = {
+                labels: columnsTopProduct,
+                datasets: [
+                    {
+                        label: report_name_top_product,
+                        data: valuesTopProduct,
+                        backgroundColor: [
+                        'rgba(255, 99, 132, 0.9)',  // Màu đỏ tươi
+                        'rgba(54, 162, 235, 0.9)',  // Màu xanh dương
+                        'rgba(255, 206, 86, 0.9)',  // Màu vàng
+                        'rgba(75, 192, 192, 0.9)',  // Màu xanh lá cây
+                        'rgba(153, 102, 255, 0.9)'  // Màu tím
+                        ],
+                        borderColor: [
+                            '#FFFFFF'
+                        ],
+                        borderWidth: 2,
+                    }
+                ]
+            };
+
+            new Chart($('.chart-statics-top-product'), {
+                type: 'pie',
+                data: chartDataTopProduct,
+                options: {
+                    responsive: true,
                 }
             });
         })

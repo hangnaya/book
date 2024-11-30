@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('login', views.log_in, name='login'),
     path('logout', views.log_out, name='logout'),
-    path('home', views.home, name='home'),
+    path('', views.home, name='home'),
     path('list-product', views.listProduct, name='list-product'),
     path('product/<int:product_id>', views.getProductDetail, name='product-detail'),
     path('cart', views.add_to_cart, name='cart'),
@@ -77,7 +77,8 @@ urlpatterns = [
     path('update_status', views.updateStatus, name='update_status'),
 
     # dashboard
-    path('report', views.report, name='report'),
+    path('dashboard', views.report, name='dashboard'),
+    path('export-orders/', views.export_orders, name='export_orders'),
 
     path('ckeditor/', include('ckeditor_uploader.urls')),
 ]
