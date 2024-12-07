@@ -86,7 +86,16 @@
                                         
                                         
                                     </td>
-                                    <td>{{ order.payment_method }}</td>
+                                    <td>{{ order.payment_method }}
+                                        {% if order.payment_method == 'Paypal' %}
+                                            {% if order.status.name == 'Chờ thanh toán' %}
+                                                (<span class="text-danger">Chưa thanh toán</span>)
+                                            {% else %}
+                                                (<span class="text-success">Đã thanh toán</span>)
+                                            {% endif %}
+                                            
+                                        {% endif %}
+                                    </td>
                                     <td>{{ order.total | floatformat:0 |intcomma_dot }}đ</td>
                                     <td>{{ order.date | date:"H:i:s d/m/Y" }}</td>
                                 </tr>

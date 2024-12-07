@@ -17,7 +17,7 @@
                             <i class="fas fa-circle"></i>
                             <p class="date"><span>Danh mục: </span>{{ post.category.name }}</p>
                         </div>
-                        <div class="content">
+                        <div class="content-des">
                             {{ post.content | safe }}
                         </div>
                     </div>
@@ -30,7 +30,8 @@
                                     <a class="product" href="{% url 'post-detail' other_post.post_id %}">
                                         <div class="product-card">
                                             <div class="product-image">
-                                                <img src="{% static 'img/news.png' %}" alt="" class="product-img">
+                                                <img src="/app/media/{{other_post.image}}" alt=""  class="product-img"/>
+                                                <!-- <img src="{% static 'img/news.png' %}" alt="" class="product-img"> -->
                                             </div>
                                             <div class="post-title">{{other_post.title}}</div>
                                             <div class="post-author">

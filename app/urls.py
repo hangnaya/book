@@ -86,6 +86,14 @@ urlpatterns = [
     path('export-orders/', views.export_orders, name='export_orders'),
 
     path('ckeditor/', include('ckeditor_uploader.urls')),
+    path('oauth/', include('social_django.urls', namespace='social')),
+
+    path('create-payment/', views.create_payment, name='create_payment'),
+    path('payment-success/', views.payment_success, name='payment_success'),
+    path('payment-cancel/', views.payment_cancel, name='payment_cancel'),
+
+    path('vnpay_return/', views.payment_return, name='vnpay_return'),
+    path('payment-vnpay', views.payment_vnpay, name='payment-vnpay'),
 ]
 
 

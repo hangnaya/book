@@ -100,21 +100,13 @@
                                         <!-- Register buttons -->
                                         <div class="text-center">
                                             <p>Hoặc đăng nhập với</p>
-                                            <button type="button" class="login-option btn btn-link btn-floating mx-1">
+                                            <!-- <button id="login-facebook" type="button" class="login-option btn btn-link btn-floating mx-1">
                                                 <i class="fab fa-facebook-f"></i>
-                                            </button>
+                                            </button> -->
 
-                                            <button type="button" class="login-option btn btn-link btn-floating mx-1">
+                                            <button id="login-google" type="button" class="login-option btn btn-link btn-floating mx-1">
                                                 <i class="fab fa-google"></i>
                                             </button>
-
-                                            {% comment %} <button type="button" class="login-option btn btn-link btn-floating mx-1">
-                                                <i class="fab fa-twitter"></i>
-                                            </button>
-
-                                            <button type="button" class="login-option btn btn-link btn-floating mx-1">
-                                                <i class="fab fa-github"></i>
-                                            </button> {% endcomment %}
                                         </div>
                                     </form>
                                 </div>
@@ -212,5 +204,16 @@
                     }, false)
                 })
         })()
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('#login-google').click(function() {
+                window.location.href = '/oauth/login/google-oauth2/';
+            });
+    
+            $('#login-facebook').click(function() {
+                window.location.href = '/oauth/login/facebook/';
+            });
+        });
     </script>
 </body>

@@ -45,7 +45,7 @@
                 <input type="text" class="form-control" name="publisher" id="product-publisher" placeholder="Tên NXB ...">
             </div>
             <div class="mb-3">
-                <label for="product-translator" class="form-label fw-bold">Người dịch<span class="text-danger">*</span></label>
+                <label for="product-translator" class="form-label fw-bold">Người dịch</label>
                 <input type="text" class="form-control" name="translator" id="product-translator" placeholder="Tên người dịch ...">
             </div>
             <div class="row">
@@ -186,7 +186,7 @@
                 category: {required: true},
                 author: {required: true, maxlength: 100},
                 publisher: {required: true, maxlength: 100},
-                translator: {required: true, maxlength: 100},
+                translator: {maxlength: 100},
                 price: {required: true, number: true, min:0.0},
                 sale: {required: true, number: true, min:0.0, greaterThan: "#price"},
                 page: {required: true, number: true, min:0},
@@ -208,7 +208,7 @@
                 category: {required: "Danh mục không được để trống"},
                 author: {required: "Tên tác giả không được để trống", maxlength: "Tên tác giả tối đa 100 ký tự"},
                 publisher: {required: "Tên NXB không được để trống", maxlength: "Tên NXB tối đa 100 ký tự"},
-                translator: {required: "Người dịch không được để trống", maxlength: "Người dịch tối đa 100 ký tự"},
+                translator: {maxlength: "Người dịch tối đa 100 ký tự"},
                 price: {required: "Giá thường không được để trống", number: "Giá phải là số", min: "Giá phải lớn hơn 0"},
                 sale: {required: "Giá giảm không được để trống", number: "Giá phải là số", min: "Giá phải lớn hơn 0"},
                 page: {required: "Số trang không được để trống", number: "Số trang phải là số", min: "Số trang phải lớn hơn 0"},

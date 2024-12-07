@@ -8,8 +8,7 @@
     <div class="container ">
         <h2>Giỏ hàng</h2> 
         <div class="row">
-            <div class="col-8">
-
+            <div class="col-8 bg-white pt-3">
                 {% if cart.cartitem_set.all %}                
                 <div class="cart-table">
                     <table class="table">
@@ -64,7 +63,9 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="cart-product-price">{{item.price|floatformat:0|intcomma_dot}} đ</div>
+                                    <div class="cart-product-price">
+                                        {{item.price|floatformat:0|intcomma_dot}} đ
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="cart-product-total-price">{{item.total_price|floatformat:0|intcomma_dot}} đ</div>
@@ -175,7 +176,7 @@
                             <h4 class="total-money">0đ</h4>
                         </div>
                         <div class="payment">
-                            <button class="btn btn-primary w-100" style="height: 40px;">Thanh toán</button>
+                            <button class="btn btn-payment btn-primary w-100 disabled" style="height: 40px;">Thanh toán</button>
                             <div class="payment-alert"></div>
                         </div>
                         <div class="form-checkout">
@@ -205,10 +206,19 @@
         {% endfor %}
         {% endif %} {% endcomment %}
 
+        function handleDisabledButton() {
+            if ($('.cart-table__select-item:checked').length > 0) {
+                $('.btn-payment').removeClass('disabled');
+            } else {
+                $('.btn-payment').addClass('disabled');
+            }
+        }
+
         $(".cart-table__select-all").click(function() {
             var checkAllState = $(this).prop('checked');
             $('.cart-table__select-item').prop('checked', checkAllState);
             calMoney();
+            handleDisabledButton();
         })
 
         $(".cart-table__select-item").click(function() {
@@ -217,6 +227,7 @@
             // nếu không có checkbox nào chưa được check, check-all cũng được check
             $(".cart-table__select-all").prop("checked", !unchecked);
             calMoney();
+            handleDisabledButton();
         });
         $('.btn-add').click(function() {
             changeQuantity.bind(this)('add')
@@ -327,7 +338,7 @@
             calMoney();
         })
 
-        $('.payment').click(function() {
+        $('.btn-payment').click(function() {
             var total_money = parseFloat($('.total-money').text().replaceAll('.', ''));
             if (total_money < 0) {
                 $('.payment-alert').html('<div class="text-danger mt-3">Có lỗi xảy ra, giá tiền không được nhỏ hơn 0</div>');
@@ -343,6 +354,11 @@
                 var cartItemId = $(this).closest('tr').data('cart-item-id');
                 cartItemIds.push(cartItemId);
             });
+
+            if (cartItemIds.length == 0) {
+                $('.payment-alert').html('<div class="text-danger mt-3">Vui lòng chọn sản phẩm cần thanh toán</div>');
+                return false;
+            }
 
             var coupon = $('.coupon').val();
             var discount = parseFloat($('.voucher-price').text().replaceAll('.', ''));

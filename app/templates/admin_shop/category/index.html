@@ -32,7 +32,8 @@
                 <table class="table" id="product-table">
                     <thead>
                         <tr>
-                            <th scope="col" style="width: 80%; text-align: left;">Tên danh mục</th>
+                            <th scope="col" style="width: 50%; text-align: left;">Tên danh mục</th>
+                            <th scope="col" style="width: 40%; text-align: left;">Danh mục cha</th>
                             <th scope="col"></th>
                         </tr>
                     </thead>
@@ -41,6 +42,19 @@
                         <tr class="cart-table-row align-items-center">
                             <td style="text-align: left;">
                                 {{ category.name }}
+                            </td>
+                            <td style="text-align: left;">
+                                {% if category.parent_id == 1 %}
+                                    Văn học
+                                {% elif category.parent_id == 2 %}
+                                    Kinh tế
+                                {% elif category.parent_id == 3 %}
+                                    Sách thiếu nhi
+                                {% elif category.parent_id == 4 %}
+                                    Giáo khoa - Tham khảo
+                                {% else %}
+                                    -
+                                {% endif %}
                             </td>
                             <td>
                                 <div class="cart-product-action">

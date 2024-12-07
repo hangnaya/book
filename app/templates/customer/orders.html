@@ -150,8 +150,11 @@
             } else if (status == 'Giao hàng thành công') {
                 color_status = 'badge-success';
                 icon = '<i class="fa-solid fa-check"></i>';
-            } else {
+            } else if (status == 'Chờ thanh toán') {
                 color_status = 'badge-danger';
+                icon = '<i class="fas fa-money-bill-wave"></i>';
+            } else {
+                color_status = 'badge-primary';
                 icon = '<i class="fa-regular fa-clock"></i>';
             }
             $(this).html('<span class="badge rounded-pill ' + color_status + '"><span class="badge-lable me-2">' + status + '</span>' + icon + '</span>')

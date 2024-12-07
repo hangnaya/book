@@ -32,8 +32,23 @@ from datetime import timedelta
 import logging
 from django.db.models import Avg
 from django.contrib import messages
+import paypalrestsdk
+from django.conf import settings
+from django.db import transaction
+import hashlib
+import hmac
+import urllib.parse
+from app.vnpay import vnpay
+import random
 import csv
 from django.http import HttpResponse
+
+
+paypalrestsdk.configure({
+    'mode': settings.PAYPAL_MODE,
+    'client_id': settings.PAYPAL_CLIENT_ID,
+    'client_secret': settings.PAYPAL_CLIENT_SECRET,
+})
 
 def convert_diff(diff):
     days_in_month = 30
@@ -141,12 +156,28 @@ def home(request):
 
 
 def listProduct(request):
-    categories = Category.objects.all()
     search = request.GET.get('search')
+    category_id = request.GET.get('category')
+    sub_category_id = request.GET.get('subcate')
+    category_selected = None
+    if category_id:
+        category_parent = Category.objects.filter(category_id = category_id).first()
+        categories = Category.objects.filter(parent_id = category_id)
+    else:
+        categories = Category.objects.all()
+        category_parent = None
 
+    category_ids = ','.join(str(category.category_id) for category in categories)
+
+    if sub_category_id:
+        category_selected =  categories.filter(category_id = sub_category_id).first()
     context = {
-        'categories': categories,
-        'search': search
+        'categoriesFilter': categories,
+        'search': search,
+        'selected_category_id': sub_category_id,
+        'category_selected': category_selected,
+        'category_parent': category_parent,
+        'category_ids': category_ids,
     }
     return render(request, 'customer/list-product.html', context)
 
@@ -159,22 +190,23 @@ def getListProduct(request):
     if category:
         category = [int(category) for category in category.split(',')]
 
-    status = request.GET.get('status')
-    if status:
-        status = [status for status in status.split(',')]
+    type = request.GET.get('type')
+    if type:
+        type = [type for type in type.split(',')]
+
+    age = request.GET.get('age')
+    if age:
+        age = [age for age in age.split(',')]
 
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
     # rating = request.GET.get('rating')
     sort = request.GET.get('sort')
-    top_sale_products = request.GET.get('top_sale_products')
-    top_selling_products = request.GET.get('top_selling_products')
-    best_selling_product = request.GET.get('best_selling_product')
 
     products = Product.objects.annotate(
         quantity=Sum('productdetail__quantity')
     )
-    print(products)
+
     if search is not None and search != '':
         products = products.filter(name__icontains=search)
 
@@ -182,28 +214,49 @@ def getListProduct(request):
         categories = Category.objects.filter(category_id__in=category)
         products = products.filter(category__in=categories)
 
-    if status and len(status) == 1:
-        if status[0] == 'instock':
-            products = products.filter(quantity__gt=0)
-        elif status[0] == 'outstock':
-            products = products.filter(quantity=0)
+    if age and len(age) == 1:
+        if age[0] == '1':
+            products = products.filter(age__gte=18)
+        elif age[0] == '2':
+            products = products.filter(age__gte=15)
+        elif age[0] == '3':
+            products = products.filter(age__gte=11)
+        elif age[0] == '4':
+            products = products.filter(age__gte=5)
+
+    if type and len(type) == 1:
+        if type[0] == '0':
+            products = products.filter(productdetail__type=0)
+        elif type[0] == '1':
+            products = products.filter(productdetail__type=1)
 
     if min_price:
-        products = products.filter(price__gte=int(min_price))
+        products = products.filter(
+            Q(sale__gte=int(min_price), sale__gt=0) |
+            Q(price__gte=int(min_price), sale=0)
+        )
 
     if max_price:
-        products = products.filter(price__lte=int(max_price))
+        products = products.filter(
+            Q(sale__lte=int(max_price), sale__gt=0) |
+            Q(price__lte=int(max_price), sale=0)
+        )
+    # if min_price:
+    #     products = products.filter(price__gte=int(min_price))
+
+    # if max_price:
+    #     products = products.filter(price__lte=int(max_price))
 
     # if rating:
     #     products = products.filter(rating__gte=rating)
-
-    if top_sale_products:
-        products = products.order_by('-sale')
-
-    if top_selling_products:
+                    
+    if sort == 'price_asc':
+        products = products.order_by('price')
+    elif sort == 'price_desc':
+        products = products.order_by('-price')
+    elif sort == 'top_selling_products':
         products = products.order_by('-total_sold')
-
-    if best_selling_product:
+    elif sort == 'best_selling_product':
         now = timezone.now()
         products = (products.filter(
             orderitem__order__date__month=now.month,
@@ -211,11 +264,8 @@ def getListProduct(request):
         ).annotate(
             total_sold_month=Sum('orderitem__quantity')
         ).order_by('-total_sold_month'))
-                    
-    if sort == 'price_asc':
-        products = products.order_by('price')
-    elif sort == 'price_desc':
-        products = products.order_by('-price')
+    elif sort == 'top_sale_products':
+        products = products.order_by('-sale')
 
     paginator = PageNumberPagination()
     paginator.page_query_param = 'page'
@@ -268,7 +318,7 @@ def add_to_cart(request):
         cartitems = CartItem.objects.filter(cart=cart)
         cartitems = cartitems.annotate(
             price=Case(
-                When(product__sale__gte=0, then=F('product__sale')),
+                When(product__sale__gt=0, then=F('product__sale')),
                 default=F('product__price'),
                 output_field=FloatField()
             ),
@@ -373,7 +423,7 @@ def checkout(request):
 
     cart_items = CartItem.objects.filter(pk__in=cart_items).annotate(
         price=Case(
-            When(product__sale__gte=0, then=F('product__sale')),
+            When(product__sale__gt=0, then=F('product__sale')),
             default=F('product__price'),
             output_field=FloatField()
         ),
@@ -478,6 +528,10 @@ def delete_address(request):
             'message': "Địa chỉ giao hàng đã được xóa thành công"
         })
 
+def convert_vnd_to_usd(vnd_amount):
+    exchange_rate = 25274
+    usd_amount = vnd_amount / exchange_rate
+    return round(usd_amount, 2)
 
 def order(request):
     if request.method == 'POST':
@@ -489,70 +543,160 @@ def order(request):
         product_id = request.POST.get('product_id')
         type = request.POST.get('type')
         quantity = request.POST.get('quantity')
+        total_vnd = int(request.POST.get('total'))
+        total_usd = convert_vnd_to_usd(total_vnd)
         if quantity:
             quantity = int(request.POST.get('quantity'))
 
         if order_form.is_valid():
-            order = order_form.save(commit=False)
-            order.customer = request.user
-            status = OrderStatus.objects.get(name='Chờ xác nhận')
-            order.status = status
-            order.save()
-            tracking = Tracking.objects.create(order_status=status, order=order)
-            tracking.save()
-            coupon = Coupon.objects.filter(code=coupon).order_by('-start_date').first()
-            messages.success(request, 'Đặt hàng thành công')
+            with transaction.atomic():
+                order = order_form.save(commit=False)
+                order.customer = request.user
+                payment_method = order.payment_method
+                is_paypal = False
+                is_vnpay = False
+                status = OrderStatus.objects.get(name='Chờ xác nhận')
 
-            if coupon:
-                coupon.quantity -= 1
-                coupon.save()
-            for cart_item in cart_items:
-                order_item = OrderItem.objects.create(
-                    type=cart_item.type,
-                    quantity=cart_item.quantity,
-                    price=cart_item.product.sale if cart_item.product.sale else cart_item.product.price,
-                    order=order,
-                    product=cart_item.product
+                if payment_method == 'Tiền mặt':
+                    order.status = status
+                    order.save()
+                    messages.success(request, 'Đặt hàng thành công')
+                elif payment_method == 'Paypal':
+                    status2 = OrderStatus.objects.get(name='Chờ thanh toán')
+                    order.status = status2
+                    order.save()
+                    payment = paypalrestsdk.Payment({
+                        "intent": "sale",
+                        "payer": {
+                            "payment_method": "paypal"
+                        },
+                        "redirect_urls": {
+                            "return_url": f"http://127.0.0.1:8000/payment-success?order_id={order.order_id}",
+                            "cancel_url": "http://127.0.0.1:8000/payment-cancel/"
+                        },
+                        "transactions": [{
+                            "amount": {
+                                "total": total_usd,
+                                "currency": "USD"
+                            },
+                            "description": "Thanh toán đơn hàng"
+                        }]
+                    })
+
+                    if payment.create():
+                        # status = OrderStatus.objects.get(name='Chờ thanh toán')
+                        # order.status = status
+                        # order.save()
+                        is_paypal = True
+                        
+                    else:
+                        context = {
+                            'cart_items': cart_items,
+                            'coupon': coupon,
+                            'discount': discount,
+                            'order_form': order_form,
+                            'error': payment.error
+                        }
+                        return render(request, 'customer/order/checkout.html', context)
+                elif payment_method == 'VNpay':
+                    status2 = OrderStatus.objects.get(name='Chờ thanh toán')
+                    order.status = status2
+                    order.save()
+                    language = request.POST.get('language')
+                    ipaddr = get_client_ip(request)
+                    # Build URL Payment
+                    vnp = vnpay()
+                    vnp.requestData['vnp_Version'] = '2.1.0'
+                    vnp.requestData['vnp_Command'] = 'pay'
+                    vnp.requestData['vnp_TmnCode'] = settings.VNPAY_TMN_CODE
+                    vnp.requestData['vnp_Amount'] = total_vnd * 100
+                    vnp.requestData['vnp_CurrCode'] = 'VND'
+                    vnp.requestData['vnp_TxnRef'] = order.order_id
+                    vnp.requestData['vnp_OrderInfo'] = 'Thanh toán đơn hàng'
+                    vnp.requestData['vnp_OrderType'] = 'other'
+                    # Check language, default: vn
+                    if language and language != '':
+                        vnp.requestData['vnp_Locale'] = language
+                    else:
+                        vnp.requestData['vnp_Locale'] = 'vn'
+                    # Check bank_code, if bank_code is empty, customer will be selected bank on VNPAY
+                    # if bank_code and bank_code != "":
+                    #     vnp.requestData['vnp_BankCode'] = bank_code
+
+                    vnp.requestData['vnp_CreateDate'] = datetime.now().strftime('%Y%m%d%H%M%S')  # 20150410063022
+                    vnp.requestData['vnp_IpAddr'] = ipaddr
+                    vnp.requestData['vnp_ReturnUrl'] = f"{settings.VNPAY_RETURN_URL}?order_id={order.order_id}"
+                    vnpay_payment_url = vnp.get_payment_url(settings.VNPAY_URL, settings.VNPAY_HASH_SECRET)
+                    is_vnpay = True
+
+                tracking = Tracking.objects.create(order_status=status, order=order)
+                tracking.save()
+                coupon = Coupon.objects.filter(code=coupon).order_by('-start_date').first()
+
+                notification = Notification.objects.create(
+                    content=f"Đơn hàng #{order.order_id} đã được đặt hàng thành công",
+                    create_at=timezone.now(),
+                    customer=request.user
                 )
-                order_item.save()
 
-                product = cart_item.product
-                product.total_sold += cart_item.quantity
-                product.save()
+                if coupon:
+                    coupon.quantity -= 1
+                    coupon.save()
+                for cart_item in cart_items:
+                    order_item = OrderItem.objects.create(
+                        type=cart_item.type,
+                        quantity=cart_item.quantity,
+                        price=cart_item.product.sale if cart_item.product.sale else cart_item.product.price,
+                        order=order,
+                        product=cart_item.product
+                    )
+                    order_item.save()
 
-                product_detail = ProductDetail.objects.filter(product=product, type=cart_item.type).first()
-                if product_detail.quantity < cart_item.quantity:
-                    raise ValidationError('Sản phẩm đã hết hàng')
-                product_detail.quantity -= cart_item.quantity
-                product_detail.save()
+                    product = cart_item.product
+                    product.total_sold += cart_item.quantity
+                    product.save()
 
-                cart_item.delete()
-            if product_id:
-                product = Product.objects.filter(pk=product_id).annotate(
-                    curr_price=Case(
-                        When(sale__gte=0, then=F('sale')),
-                        default=F('price'),
-                        output_field=FloatField()
-                    ),
-                ).first()
-                product_detail = ProductDetail.objects.filter(product=product, type=type).first()
-                if product_detail.quantity < quantity:
-                    raise ValidationError('Sản phẩm đã hết hàng')
-                product_detail.quantity -= quantity
-                product_detail.save()
+                    product_detail = ProductDetail.objects.filter(product=product, type=cart_item.type).first()
+                    if product_detail.quantity < cart_item.quantity:
+                        raise ValidationError('Sản phẩm đã hết hàng')
+                    product_detail.quantity -= cart_item.quantity
+                    product_detail.save()
 
-                product.total_sold += quantity
-                product.save()
-                order_item = OrderItem.objects.create(
-                    type=type,
-                    quantity=quantity,
-                    price=product.curr_price,
-                    order=order,
-                    product=product
-                )
-                order_item.save()
+                    cart_item.delete()
+                if product_id:
+                    product = Product.objects.filter(pk=product_id).annotate(
+                        curr_price=Case(
+                            When(sale__gte=0, then=F('sale')),
+                            default=F('price'),
+                            output_field=FloatField()
+                        ),
+                    ).first()
+                    product_detail = ProductDetail.objects.filter(product=product, type=type).first()
+                    if product_detail.quantity < quantity:
+                        raise ValidationError('Sản phẩm đã hết hàng')
+                    product_detail.quantity -= quantity
+                    product_detail.save()
+
+                    product.total_sold += quantity
+                    product.save()
+                    order_item = OrderItem.objects.create(
+                        type=type,
+                        quantity=quantity,
+                        price=product.curr_price,
+                        order=order,
+                        product=product
+                    )
+                    order_item.save()
                 
-            return redirect('/get-order')
+                if is_paypal == True:
+                    for link in payment.links:
+                            if link.rel == "approval_url":
+                                approval_url = str(link.href)
+                                return redirect(approval_url)
+                elif is_vnpay == True:
+                    return redirect(vnpay_payment_url)
+                else:
+                    return redirect('/get-order')
         else:
             context = {
                 'cart_items': cart_items,
@@ -599,6 +743,12 @@ def get_order_detail(request):
     order_id = int(request.GET.get('order_id'))
     order = get_object_or_404(Order, pk=order_id)
     order_tracking = Tracking.objects.filter(order=order).order_by('date')
+
+    Notification.objects.filter(
+        customer=request.user,
+        content__icontains=f"#{order_id}"
+    ).update(is_read=1)
+
     context = {
         'order': order,
         'order_tracking': order_tracking
@@ -758,7 +908,7 @@ def postDetail(request, post_id):
     post = get_object_or_404(Post, post_id=post_id)
     post.views += 1
     post.save()
-    other_posts = Post.objects.filter(category_id=post.category_id).exclude(post_id=post.post_id)[:5]
+    other_posts = Post.objects.filter(category_id=post.category_id, is_active = 1).exclude(post_id=post.post_id)[:5]
 
     return render(request, 'customer/post-detail.html', {
         'post': post,
@@ -1180,6 +1330,8 @@ def getOrderDetail(request):
         status_ids = [4, 5, 6]
     elif order.status.order_status_id == 5:
         status_ids = [5]
+    elif order.status.order_status_id == 7:
+        status_ids = [7]
     else:
         status_ids = [6]
     states = OrderStatus.objects.filter(order_status_id__in=status_ids).order_by("order_status_id")
@@ -1351,13 +1503,13 @@ def categoryManager(request):
 
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
-    print(page_obj.__dict__)
     return render(request, 'admin_shop/category/index.html', {'page_obj': page_obj})
 
 @login_required(login_url='/login')
 def addCategory(request):
     messages = '' 
     error = ''
+    categories = Category.objects.all()
     if request.method == 'POST':
         form = CategoryForm(request.POST or None)
         if form.is_valid():
@@ -1371,7 +1523,7 @@ def addCategory(request):
     else:
         form = CategoryForm()
     return render(request, 'admin_shop/category/add.html',
-                  {'form': form, 'error': error, 'messages' : messages})
+                  {'categories':categories, 'form': form, 'error': error, 'messages' : messages})
 
 @login_required(login_url='/login')
 def editCategory(request):
@@ -1589,6 +1741,131 @@ def deletePost(request):
         'success': True,
         'message': "bài viết đã được xóa thành công"
     })
+
+def create_payment(request):
+    if request.method == "POST":
+        total = int(request.POST.get('total'))
+        total_usd = convert_vnd_to_usd(total)
+        order_id = request.POST.get('order_id')
+
+        payment = paypalrestsdk.Payment({
+            "intent": "sale",
+            "payer": {
+                "payment_method": "paypal"
+            },
+            "redirect_urls": {
+                "return_url": f"http://127.0.0.1:8000/payment-success?order_id={order_id}",
+                "cancel_url": "http://127.0.0.1:8000/payment-cancel/"
+            },
+            "transactions": [{
+                "amount": {
+                    "total": total_usd,
+                    "currency": "USD"
+                },
+                "description": "Thanh toán đơn hàng"
+            }]
+        })
+
+        if payment.create():
+            approval_url = next(link['href'] for link in payment.links if link['rel'] == 'approval_url')
+            return JsonResponse({'approval_url': approval_url})
+        else:
+            return JsonResponse({'error': payment.error}, status=500)
+
+def payment_success(request):
+    payment_id = request.GET.get('paymentId')
+    payer_id = request.GET.get('PayerID')
+    order_id = int(request.GET.get('order_id'))
+    order = get_object_or_404(Order, pk=order_id)
+    status = OrderStatus.objects.get(name='Chờ xác nhận')
+    order.status = status
+    order.save()
+
+    payment = paypalrestsdk.Payment.find(payment_id)
+
+    if payment.execute({"payer_id": payer_id}):
+        messages.success(request, f"Thanh toán đơn hàng #{order_id} thành công")
+        return redirect('/get-order')
+    else:
+        messages.success(request, f"Thanh toán đơn hàng #{order_id} thất bại")
+        return redirect('/get-order')
+
+def payment_cancel(request):
+    messages.success(request, 'Đơn hàng chưa được thanh toán')
+    return redirect('/get-order')
+
+def payment_return(request):
+    inputData = request.GET
+    if inputData:
+        vnp = vnpay()
+        vnp.responseData = inputData.dict()
+        order_id = int(request.GET.get('order_id'))
+        order = get_object_or_404(Order, pk=order_id)
+        order_id = inputData['vnp_TxnRef']
+        vnp_ResponseCode = inputData['vnp_ResponseCode']
+
+        if vnp.validate_response(settings.VNPAY_HASH_SECRET):
+            if vnp_ResponseCode == "00":
+                status = OrderStatus.objects.get(name='Chờ xác nhận')
+                order.status = status
+                order.save()
+                messages.success(request, f"Thanh toán đơn hàng #{order_id} thành công")
+            else:
+                messages.success(request, f"Thanh toán đơn hàng #{order_id} thất bại")
+        else:
+            messages.success(request, 'Đơn hàng chưa được thanh toán')
+        return redirect('/get-order')
+    else:
+        messages.success(request, 'Đơn hàng chưa được thanh toán')
+        return redirect('/get-order')
+
+def payment_vnpay(request):
+    if request.method == "GET":
+        total = int(request.GET.get('total'))
+        order_id = int(request.GET.get('order_id'))
+        random_number = random.randint(100, 100000)
+        new_order_id = order_id + random_number
+        language = request.GET.get('language')
+        ipaddr = get_client_ip(request)
+        # Build URL Payment
+        vnp = vnpay()
+        vnp.requestData['vnp_Version'] = '2.1.0'
+        vnp.requestData['vnp_Command'] = 'pay'
+        vnp.requestData['vnp_TmnCode'] = settings.VNPAY_TMN_CODE
+        vnp.requestData['vnp_Amount'] = total * 100
+        vnp.requestData['vnp_CurrCode'] = 'VND'
+        vnp.requestData['vnp_TxnRef'] = new_order_id
+        vnp.requestData['vnp_OrderInfo'] = 'Thanh toán đơn hàng'
+        vnp.requestData['vnp_OrderType'] = 'other'
+        # Check language, default: vn
+        if language and language != '':
+            vnp.requestData['vnp_Locale'] = language
+        else:
+            vnp.requestData['vnp_Locale'] = 'vn'
+        # Check bank_code, if bank_code is empty, customer will be selected bank on VNPAY
+        # if bank_code and bank_code != "":
+        #     vnp.requestData['vnp_BankCode'] = bank_code
+
+        vnp.requestData['vnp_CreateDate'] = datetime.now().strftime('%Y%m%d%H%M%S')  # 20150410063022
+        vnp.requestData['vnp_IpAddr'] = ipaddr
+        vnp.requestData['vnp_ReturnUrl'] = f"{settings.VNPAY_RETURN_URL}?order_id={order_id}"
+        vnpay_payment_url = vnp.get_payment_url(settings.VNPAY_URL, settings.VNPAY_HASH_SECRET)
+        print(vnpay_payment_url)
+        return redirect(vnpay_payment_url)
+
+def hmacsha512(key, data):
+    byteKey = key.encode('utf-8')
+    byteData = data.encode('utf-8')
+    return hmac.new(byteKey, byteData, hashlib.sha512).hexdigest()
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
 def export_orders(request):
     start_date = request.GET.get('startDate')
     end_date = request.GET.get('endDate')

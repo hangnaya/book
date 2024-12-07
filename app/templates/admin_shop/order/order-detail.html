@@ -85,6 +85,20 @@
                                         <div class="col-9">Phí vận chuyển</div>
                                         <div class="col-3 d-flex flex-row-reverse">{{ order.shipping |floatformat:0|intcomma_dot }}đ</div>
                                     </div>
+                                    <div class="row my-2">
+                                        <div class="col-9">Hình thức thanh toán:
+                                            {% if order.payment_method == 'Paypal' %}
+                                                {% if order.status.name == 'Chờ thanh toán' %}
+                                                    (<span class="text-danger">Chưa thanh toán</span>)
+                                                {% else %}
+                                                    (<span class="text-success">Đã thanh toán</span>)
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-3 d-flex flex-row-reverse">
+                                            <span class="text-bold">{{ order.payment_method }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="row my-2 fs-5">
                                     <div class="col-9">Tổng tiền</div>

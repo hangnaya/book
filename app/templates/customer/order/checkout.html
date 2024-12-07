@@ -5,9 +5,13 @@
 <div class="py-5">
     <div class="container">
         <div class="row">
-            <div class="col-8">
+            <div class="col-8 bg-white pt-3">
                 <h2 class="mb-4">Thanh toán</h2>
-
+                {% if error %}
+                    <div class="alert alert-danger">
+                        {{ error }}
+                    </div>
+                {% endif %}
                 <form action="{% url 'order' %}" class='form-order' method='post'>
                     {% csrf_token %}
                     {% for item in cart_items %}
@@ -298,23 +302,23 @@
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="payment_method" value='Tiền mặt' id="payment-cash" checked>
                                         <label class="form-check-label" for="payment-cash">
-                                            Tiền mặt
+                                            Thanh toán khi nhận hàng
                                         </label>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="payment_method" value='Thẻ tín dụng' id="payment-card">
+                                        <input class="form-check-input" type="radio" name="payment_method" value='Paypal' id="payment-card">
                                         <label class="form-check-label" for="payment-card">
-                                            Thẻ tín dụng
+                                            Paypal <i class="fab fa-paypal"></i>
                                         </label>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="payment_method" value='Zalo Pay' id="payment-e-wallet">
+                                        <input class="form-check-input" type="radio" name="payment_method" value='VNpay' id="payment-e-wallet">
                                         <label class="form-check-label" for="payment-e-wallet">
-                                            Ví điện tử
+                                            VNpay <i class="fas fa-credit-card"></i>
                                         </label>
                                     </div>
                                 </div>

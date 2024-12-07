@@ -7,7 +7,11 @@
         <h4 class="mb-2">Trạng thái đơn hàng
             <span class="color-blue fw-normal">#{{ order.order_id }}</span>
         </h4>
-
+        {% if order.payment_method == 'Paypal' or order.payment_method == 'VNpay' %}
+            {% if order.status.name == 'Chờ thanh toán' %}
+                <h6 class="text-danger">Đơn hàng chưa được thanh toán, vui lòng thanh toán để tiếp tục đặt hàng</h6>
+            {% endif %}
+        {% endif %}
         <hr class="mb-5">
         <div class="row">
             <div class="col-6 ">
@@ -150,6 +154,24 @@
                             <div class="col-3 d-flex flex-row-reverse total"></div>
                         </div>
                         <div class="d-flex justify-content-end mt-4">
+                            {% if order.payment_method == 'Paypal' %}
+                                {% if order.status.name == 'Chờ thanh toán' %}
+                                    <button id="pay-btn" data-order_id="{{order.order_id}}">
+                                        Thanh toán <i class="fab fa-paypal"></i>
+                                    </button>
+                                {% else %}
+                                    <img src="app/media/images/paid_1.png" class="logo-paid" alt="...">
+                                {% endif %}
+                            {% endif %}
+                            {% if order.payment_method == 'VNpay' %}
+                                {% if order.status.name == 'Chờ thanh toán' %}
+                                    <button id="vnpay-btn" data-order_id="{{order.order_id}}">
+                                        Thanh toán <i class="fas fa-credit-card"></i>
+                                    </button>
+                                {% else %}
+                                    <img src="app/media/images/paid_1.png" class="logo-paid" alt="...">
+                                {% endif %}
+                            {% endif %}
                             {% if order.status.name == 'Giao hàng thành công' %}
                             <a href='/feedback?order_id={{order.order_id}}' class='btn btn-primary' style='width: 120px;'>Đánh giá</a>
 
@@ -162,8 +184,6 @@
                             </button>
                             {% endif %}
                         </div>
-                        
-                        
 
                         <!-- Modal -->
                         <div class="modal fade" id="cancel-order" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -290,7 +310,42 @@
             `);
         }
         
-
+        $('#pay-btn').click(function () {
+            let total = totaMoney;
+            let order_id = $(this).data('order_id');
+            $.ajax({
+                url: '/create-payment/',
+                method: 'POST',
+                data: {
+                    'order_id': order_id,
+                    'total': total,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function (response) {
+                    if (response.approval_url) {
+                        window.location.href = response.approval_url;
+                    } else {
+                        Swal.fire(
+                            'Thanh toán thất bại!',
+                            'Có lỗi xảy ra, vui lòng thử lại sau',
+                            'error'
+                        )
+                    }
+                },
+                error: function () {
+                    Swal.fire(
+                        'Thanh toán thất bại!',
+                        'Có lỗi xảy ra, vui lòng thử lại sau',
+                        'error'
+                    )
+                }
+            });
+        });
+        $('#vnpay-btn').click(function () {
+            let total = totaMoney;
+            let order_id = $(this).data('order_id');
+            window.location.href = "/payment-vnpay?total="+ total+"&order_id=" + order_id;
+        });
     })
 </script>
 {% endblock content %}

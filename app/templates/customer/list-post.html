@@ -38,7 +38,8 @@
                                     <a class="product" href="post/{{post.post_id}}">
                                         <div class="product-card">
                                             <div class="product-image">
-                                                <img src="{% static 'img/news.png' %}" alt="" class="product-img">
+                                                <img src="/app/media/{{post.image}}" alt=""  class="product-img"/>
+                                                <!-- <img src="{% static 'img/news.png' %}" alt="" class="product-img"> -->
                                             </div>
                                             <div class="post-title">{{post.title}}</div>
                                             <div class="post-cate"><span>Danh mục: </span>{{ post.category.name }}</div>

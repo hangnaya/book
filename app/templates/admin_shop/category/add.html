@@ -20,6 +20,15 @@
                 <label for="product-name" class="form-label fw-bold">Tên danh mục <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" name="name" id="category-name" placeholder="Nhập tên danh mục">
             </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Danh mục cha <span class="text-danger">*</span></label>
+                <select class="form-select" name="parent_id" id="">
+                        <option value="1">Văn học</option>
+                        <option value="2">Kinh tế</option>
+                        <option value="3">Sách thiếu nhi</option>
+                        <option value="4">Giáo khoa - Tham khảo</option>
+                </select>
+            </div>
             <div class="d-flex justify-content-end gap-3">
                 <button type="button" class="btn btn-min-width btn-back">Quay lại</button>
                 <button class="btn btn-primary">Thêm danh mục</button>

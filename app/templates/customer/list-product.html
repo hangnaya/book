@@ -7,54 +7,113 @@
 {% endblock cdn %}
 
 {% block content %}
-<div class="py-5">
+<div class="py-3">
     <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+              <li class="breadcrumb-item"><a href="/list-product">Sản phẩm</a></li>
+              {% if category_selected is None %}
+                {% if category_parent.category_id is None %}
+                    <li class="breadcrumb-item active" aria-current="page">Sách</li>
+                {% else %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ category_parent.name }}</li>
+                {% endif %}
+              {% else %}
+                <li class="breadcrumb-item active" aria-current="page">{{ category_selected.name }}</li>
+              {% endif %}
+            </ol>
+          </nav>
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-2 p-0">
+            <div class="col-3 p-0">
                 <div class="product-filter position-sticky">
-                    <div class="d-flex align-items-center">
-                        <i class="fa-solid fa-filter me-3 icon-filter"></i>
-                        <h3 class="m-0">Bộ lọc</h3>
-                    </div>
-                    <div class="category-filter my-4">
+                    <div class="category-filter">
                         <a class="collapse-indicator" data-bs-toggle="collapse" href="#collapseCategory" role="button" aria-expanded="true" aria-controls="collapseCategory">
                             <div class="d-flex justify-content-between ">
-                                <h6 class="m-0">Category</h6>
+                                <h6 class="m-0">Danh mục</h6>
                                 <i class="toggle-icon fa-solid fa-angle-down d-flex align-items-center"></i>
                             </div>
                         </a>
-                        <div class="collapse show mt-2 " id="collapseCategory">
-
-                            {% for category in categories %}
+                        <div class="collapse show mt-2 ms-2" id="collapseCategory">
+                            <input type="hidden" id="sub_cate" value="{{ selected_category_id }}">
+                            <input type="hidden" id='parent_cate' value="{{ category_parent.category_id }}">
+                            <input type="hidden" id='list_sub_cate' value="{{ category_ids }}">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="{{ category.category_id }}" id="category-{{ category.category_id }}" name='category'>
-                                <label class="form-check-label" for="category-{{ category.category_id }}">
-                                    {{ category.name|title }}
+                                <input type="checkbox"  {% if selected_category_id is None and not category_parent.category_id %} checked {% endif %}  class="form-check-input" id='all_cate' value="all">
+                                <label class="form-check-label">
+                                    Tất cả danh mục
                                 </label>
                             </div>
-                            {% endfor %}
-
+                            {% if categoriesFilter.exists %}
+                                {% for category in categoriesFilter %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="{{ category.category_id }}" id="category-{{ category.category_id }}" name='category'
+                                    {% if selected_category_id == category.category_id|stringformat:"d" %} checked {% endif %}>
+                                    <label class="form-check-label" for="category-{{ category.category_id }}">
+                                        {{ category.name|title }}
+                                    </label>
+                                </div>
+                                <!-- {% if category.parent_id is not None %} -->
+                                    <!-- {% endif %} -->
+                                {% endfor %}
+                            {% else %}
+                                <h6>Không có danh mục con</h6>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="availabilty-filter my-4">
+                        <a class="collapse-indicator" data-bs-toggle="collapse" href="#collapseAge" role="button" aria-expanded="true" aria-controls="collapseAge">
+                            <div class="d-flex justify-content-between ">
+                                <h6 class="m-0">Độ tuổi</h6>
+                                <i class="toggle-icon fa-solid fa-angle-down d-flex align-items-center"></i>
+                            </div>
+                        </a>
+                        <div class="collapse show mt-2 ms-2" id="collapseAge">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" onclick="toggleRadio(this)" value="1" name='age'>
+                                <label class="form-check-label">
+                                    18+
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" onclick="toggleRadio(this)" value="2" name='age'>
+                                <label class="form-check-label">
+                                    15+
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" onclick="toggleRadio(this)" value="3" name='age'>
+                                <label class="form-check-label">
+                                    11+
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" onclick="toggleRadio(this)" value="4" name='age'>
+                                <label class="form-check-label">
+                                    5+
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div class="availabilty-filter my-4">
                         <a class="collapse-indicator" data-bs-toggle="collapse" href="#collapseAvailability" role="button" aria-expanded="true" aria-controls="collapseAvailability">
                             <div class="d-flex justify-content-between ">
-                                <h6 class="m-0">Trạng thái</h6>
+                                <h6 class="m-0">Loại sản phẩm</h6>
                                 <i class="toggle-icon fa-solid fa-angle-down d-flex align-items-center"></i>
                             </div>
                         </a>
-                        <div class="collapse show mt-2 " id="collapseAvailability">
+                        <div class="collapse show mt-2 ms-2" id="collapseAvailability">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="instock" id="status-1" name='status' checked>
+                                <input class="form-check-input" type="checkbox" value="0" id="status-1" name='type'>
                                 <label class="form-check-label" for="status-1">
-                                    Có hàng
+                                    Mới
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="outstock" id="status-2" name='status'>
+                                <input class="form-check-input" type="checkbox" value="1" id="status-2" name='type'>
                                 <label class="form-check-label" for="status-2">
-                                    Hết hàng
+                                    Cũ
                                 </label>
                             </div>
                         </div>
@@ -66,104 +125,54 @@
                                 <i class="toggle-icon fa-solid fa-angle-down d-flex align-items-center"></i>
                             </div>
                         </a>
-                        <div class="collapse show mt-2 " id="collapsePrice">
-                            <p id="amount"></p>
+                        <div class="collapse show mt-2 ms-2" id="collapsePrice">
+                            <!-- <p id="amount"></p>
+                            <div id="slider-range"></div> -->
+                            <div class="price-filter-input">
+                                <input type="number" class="form-control" id="minPriceInput" value="0" min="0" max="1000000" step="100000" />
+                                <input type="number" class="form-control" id="maxPriceInput" value="1000000" min="0" max="1000000" step="100000" />
+                            </div>
                             <div id="slider-range"></div>
+                            <div id="amount"></div>
                         </div>
                     </div>
-                    <div class="rating-filter my-4">
-                        <a class="collapse-indicator" data-bs-toggle="collapse" href="#collapseRating" role="button" aria-expanded="true" aria-controls="collapseRating">
-                            <div class="d-flex justify-content-between ">
-                                <h6 class="m-0">Đánh giá</h6>
-                                <i class="toggle-icon fa-solid fa-angle-down d-flex align-items-center"></i>
-                            </div>
-                        </a>
-                        <div class="collapse show mt-2 " id="collapseRating">
-                            <div class="form-check">
-                                <input class="form-check-input" value='5' type="radio" name="rating" id="rating-1">
-                                <label class="form-check-label" for="rating-1">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" value='4' type="radio" name="rating" id="rating-2" checked>
-                                <label class="form-check-label" for="rating-2">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" value='3' type="radio" name="rating" id="rating-3" checked>
-                                <label class="form-check-label" for="rating-3">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" value='2' type="radio" name="rating" id="rating-4" checked>
-                                <label class="form-check-label" for="rating-4">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" value='1' type="radio" name="rating" id="rating-5" checked>
-                                <label class="form-check-label" for="rating-5">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                </label>
-                            </div>
-
-                            <div class='d-flex justify-content-center'>
-                                <button class='filter-btn btn btn-primary mt-4 px-4'>Lọc</button>
-                            </div>
-                        </div>
+                    <div class='d-flex justify-content-center'>
+                        <button class='filter-btn btn btn-primary mt-4 px-4'>Lọc</button>
                     </div>
                 </div>
             </div>
 
             <!-- Content -->
-            <div class="col-10 p-0 ps-5">
+            <div class="col-9 p-0 ps-2">
                 <div class="list-product">
                     <!-- Sort -->
                     <div>
                         <div class="sort-bar d-flex align-items-center">
-                            <div class='color-blue'>Sắp xếp theo</div>
-                            <div class="top_selling_products btn-filter">Phổ biến</div>
-                            <div class="best_selling_product btn-filter">Đang hot</div>
-                            <div class="top_sale_products btn-filter">Giảm nhiều</div>
+                            <div class='sort-label'>Sắp xếp theo</div>
                             <div class="dropdown">
                                 <div class="btn dropdown-toggle sort-price-list" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <div class="sort-price-choice">Giá</div>
+                                    <div class="sort-price-choice">Chọn</div>
                                 </div>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                                     <li>
-                                        <div class="dropdown-item price-sort" data-sort='price_asc' href=''>Giá: từ thấp đến cao</div>
+                                        <div class="dropdown-item sort-data top_selling_products" data-sort='top_selling_products' href=''>Phổ biến</div>
                                     </li>
                                     <li>
-                                        <div class="dropdown-item price-sort" data-sort='price_desc' href=''>Giá: từ cao đến thấp</div>
+                                        <div class="dropdown-item sort-data best_selling_product" data-sort='best_selling_product' href=''>Đang hot</div>
+                                    </li>
+                                    <li>
+                                        <div class="dropdown-item sort-data top_sale_products" data-sort='top_sale_products' href=''>Giảm nhiều</div>
+                                    </li>
+                                    <li>
+                                        <div class="dropdown-item sort-data price-sort" data-sort='price_asc' href=''>Giá từ thấp đến cao</div>
+                                    </li>
+                                    <li>
+                                        <div class="dropdown-item sort-data price-sort" data-sort='price_desc' href=''>Giá từ cao đến thấp</div>
                                     </li>
                                 </ul>
                             </div>
                             <!-- List product -->
                         </div>
-                        <hr class='m-0 mb-2'>
                         {% if search %}
                         <div class="mb-3">Kết quả tìm kiếm cho từ khóa: <span class='color-red'>'{{search}}'</span></div>
                         {% endif %}
@@ -204,6 +213,19 @@
 </div>
 
 <script>
+    let lastChecked = null;
+
+    function toggleRadio(radio) {
+        console.warn(radio);
+        
+        if (lastChecked === radio) {
+            radio.checked = false;
+            lastChecked = null;
+        } else {
+            lastChecked = radio;
+        }
+    }
+
     $(document).ready(function() {
         function formatCurrency(amount) {
             if (amount >= 1000000) {
@@ -226,27 +248,40 @@
             range: true,
             min: 0,
             max: 1000000,
-            step: 50000,
+            step: 1,
             values: [minPrice, maxPrice],
             slide: function(event, ui) {
-                $("#amount").html(formatCurrency(ui.values[0]) + " - " + formatCurrency(ui.values[1]));
+                $("#amount").html(formatCurrency(ui.values[0]) + "đ - " + formatCurrency(ui.values[1]) + ' đ');
+                $("#minPriceInput").val(ui.values[0]);
+                $("#maxPriceInput").val(ui.values[1]);
             }
         });
-        $("#amount").html(formatCurrency($("#slider-range").slider("values", 0)) +
-            " - " + formatCurrency($("#slider-range").slider("values", 1)));
 
-        $('.btn-filter').click(function() {
-            $('.btn-filter').removeClass('active');
-            $(this).addClass('active');
-            $('.price-sort').removeClass('selected');
-            $('.sort-price-choice').text('Giá');
+        $("#amount").html(formatCurrency($("#slider-range").slider("values", 0)) +
+            "đ - " + formatCurrency($("#slider-range").slider("values", 1)) + ' đ');
+
+        $("#minPriceInput").on("input", function() {
+            var minValue = parseInt($(this).val()) || 0;
+            var maxValue = $("#slider-range").slider("values", 1);
+            if (minValue <= maxValue) {
+                $("#slider-range").slider("values", 0, minValue);
+                $("#amount").html(formatCurrency(minValue) + "đ - " + formatCurrency(maxValue) + ' đ');
+            }
         });
 
-        $('.price-sort').click(function() {
-            $('.btn-filter').removeClass('active');
+        $("#maxPriceInput").on("input", function() {
+            var maxValue = parseInt($(this).val()) || 10000000;
+            var minValue = $("#slider-range").slider("values", 0);
+            if (maxValue >= minValue) {
+                $("#slider-range").slider("values", 1, maxValue);
+                $("#amount").html(formatCurrency(minValue) + "đ - " + formatCurrency(maxValue) + ' đ');
+            }
+        });
+
+        $('.sort-data').click(function() {
             var selectedValue = $(this).text();
             $('.sort-price-choice').text(selectedValue);
-            $('.price-sort').removeClass('selected');
+            $('.sort-data').removeClass('selected');
             $(this).addClass('selected');
         });
 
@@ -256,38 +291,53 @@
 
         // Lọc sản phẩm
         function getListProduct() {
-            const category = $('input[name="category"]:checked').map(function() {
+            let category = $('input[name="category"]:checked').map(function() {
                 return $(this).val();
             }).get().join(',');
+
+            let sub_cate = $('#sub_cate').val();
+            let parent_cate = $('#parent_cate').val();
+            let all_cate = $('#all_cate:checked').val();
+
+            if (all_cate) {
+                category = '';
+            } 
+            
+            if (!all_cate && !category) {
+                if (parent_cate) {
+                    const listcate = $('#list_sub_cate').val();
+                    if (listcate) {
+                        category = parent_cate + ',' + $('#list_sub_cate').val();
+                    } else {
+                        category = parent_cate;
+                    }
+                }
+            }
+            
+            console.warn(category, parent_cate, sub_cate);
+
             const minPrice = $('#slider-range').slider('values', 0);
             const maxPrice = $('#slider-range').slider('values', 1);
-            const status = $('input[name="status"]:checked').map(function() {
+            const type = $('input[name="type"]:checked').map(function() {
                 return $(this).val();
             }).get().join(',');
-            const rating = $('input[name="rating"]:checked').val();
-            const topSale = $('.top_sale_products').hasClass('active');
-            const topSelling = $('.top_selling_products').hasClass('active');
-            const bestSelling = $('.best_selling_product').hasClass('active');
-            const sort = $('.price-sort.selected').attr('data-sort');
+            const price = $('input[name="price"]:checked').map(function() {
+                return $(this).val();
+            }).get().join(',');
+            const age = $('input[name="age"]:checked').val();
+
+            const sort = $('.sort-data.selected').data('sort');
             const page = $('.page-link.selected').attr('data-page');
             data = {
                 category: category,
                 min_price: minPrice,
                 max_price: maxPrice,
-                status: status,
-                rating: rating,
+                type: type,
+                age: age,
                 sort: sort,
                 search: '{{search|default:""}}'
             }
-            if (topSale) {
-                data['top_sale_products'] = topSale;
-            }
-            if (topSelling) {
-                data['top_selling_products'] = topSelling;
-            }
-            if (bestSelling) {
-                data['best_selling_product'] = bestSelling;
-            }
+
             if (page) {
                 data['page'] = page;
             }
@@ -297,7 +347,7 @@
         function loadDataProduct() {
             const data = getListProduct();
             $.ajax({
-                url: 'http://127.0.0.1:8000/filter-product',
+                url: '/filter-product',
                 method: 'GET',
                 data: data,
                 success: function(response) {
@@ -326,16 +376,16 @@
                             }
     
                             let productHtml = `
-                                    <div class="col-3">
+                                    <div class="col-lg-3 col-md-4 col-sm-6">
                                         <a class="product" href="product/${product.product_id}">
                                             <div class="product-card">
                                                 <div class="product-image">
                                                     <img src="${product.images[0]}" alt="" class="product-img">
                                                 </div>
-                                                <div class="product-name">${product.name}</div>
-                                                <div class="product-price d-flex align-items-center">
-                                                    ${salePrice == 0 ? '' : '<div class="product-price-original">' + price + 'đ</div>'}
+                                                <div class="product-name" data-toggle="tooltip" title="${product.name}">${product.name}</div>
+                                                <div class="product-price">
                                                     <div class="product-price-sale color-red">${salePrice == 0 ? price : salePrice} đ</div>
+                                                    ${salePrice == 0 ? '' : '<div class="product-price-original">' + price + 'đ</div>'}
                                                 </div>
                                                 <div class="product-rate d-flex align-items-center">
                                                     ${ratingHtml}
@@ -426,9 +476,10 @@
             });
         }
 
-        $('.filter-btn, .top_sale_products, .top_selling_products, .best_selling_product, .price-sort, .page-link').click(function() {
+        $('.sort-data, .filter-btn, .page-link').click(function() {
             loadDataProduct();
         });
+
 
         loadDataProduct();
 
