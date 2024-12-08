@@ -33,15 +33,23 @@ class ProductSerializer(serializers.ModelSerializer):
     
     def get_images(self, obj):
         return [image.name.url for image in obj.productimage_set.all()]
-    
+
+class FeedbackResponseSerializer(serializers.ModelSerializer):
+    date = serializers.DateTimeField(format="%H:%M %d/%m/%Y")
+
+    class Meta:
+        model = FeedbackRespone
+        fields = ('comment', 'date')
+
 class FeedbackSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
     user_image = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
     date = serializers.DateTimeField(format="%H:%M %d/%m/%Y", required=False)
+    responses = serializers.SerializerMethodField()
     class Meta:
         model = Feedback
-        fields = ('user_name', 'user_image', 'comment', 'rating', 'date', 'images', 'like', 'dislike')
+        fields = ('feedback_id', 'user_name', 'user_image', 'comment', 'rating', 'date', 'images', 'like', 'dislike', 'responses')
 
     def get_user_name(self, obj):
         return obj.customer.name
@@ -52,3 +60,7 @@ class FeedbackSerializer(serializers.ModelSerializer):
 
     def get_images(self, obj):
         return [image.name.url for image in obj.feedbackimage_set.all()]
+    
+    def get_responses(self, obj):
+        responses = FeedbackRespone.objects.filter(feedback=obj)
+        return FeedbackResponseSerializer(responses, many=True).data

@@ -42,7 +42,8 @@ from app.vnpay import vnpay
 import random
 import csv
 from django.http import HttpResponse
-
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
 
 paypalrestsdk.configure({
     'mode': settings.PAYPAL_MODE,
@@ -80,6 +81,10 @@ def log_in(request):
                 return render(request, 'customer/login.html', {
                     'error': 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ với quản trị viên.'
                 })
+            if userCheck.is_superuser:
+                return render(request, 'customer/login.html', {
+                    'error': 'Tên đăng nhập hoặc mật khẩu không đúng'
+                })
         except User.DoesNotExist:
             return render(request, 'customer/login.html', {
                 'error': 'Tên đăng nhập hoặc mật khẩu không đúng'
@@ -88,17 +93,46 @@ def log_in(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            if user.is_superuser:
-                return redirect('/dashboard')
             return redirect('/')
         else:
             return render(request, 'customer/login.html', {'error': 'Tên đăng nhập hoặc mật khẩu không đúng'})
+
+def log_in_admin(request):
+    if request.method == 'GET':
+        return render(request, 'admin_shop/login.html')
+    else:
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        try:
+            userCheck = User.objects.get(username=username)
+            if not userCheck.is_active:
+                return render(request, 'admin_shop/login.html', {
+                    'error': 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ với quản trị viên.'
+                })
+            if not userCheck.is_superuser:
+                return render(request, 'admin_shop/login.html', {
+                    'error': 'Tên đăng nhập hoặc mật khẩu không đúng'
+                })
+        except User.DoesNotExist:
+            return render(request, 'admin_shop/login.html', {
+                'error': 'Tên đăng nhập hoặc mật khẩu không đúng'
+            })
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('/dashboard')
+        else:
+            return render(request, 'admin_shop/login.html', {'error': 'Tên đăng nhập hoặc mật khẩu không đúng'})
 
 
 def log_out(request):
     logout(request)
     return redirect('/')
 
+def log_out_admin(request):
+    logout(request)
+    return redirect('/login-admin')
 
 def register(request):
     message = ''
@@ -129,6 +163,88 @@ def register(request):
         return render(request, 'customer/login.html', {'messages': message, 'error': error})
 
 
+def recommend_products(user_id, num_recommendations=5):
+    # Lấy dữ liệu feedback
+    feedbacks = Feedback.objects.all()
+    data = {}
+
+    # Lấy ra mảng các user và lần lượt từng sản phẩm với đánh giá của user đó
+    for feedback in feedbacks:
+        user = feedback.customer.id
+        product = feedback.product.product_id
+        rating = feedback.rating
+
+        if user not in data:
+            data[user] = {}
+        if product in data[user]:
+            current_total_rating, current_count = data[user][product]
+            new_total_rating = current_total_rating + rating
+            new_count = current_count + 1
+            data[user][product] = (new_total_rating, new_count)
+        else:
+            data[user][product] = (rating, 1)
+
+    # Tính trung bình đánh giá cho từng user / từng sản phẩm
+    for user, products in data.items():
+        for product, (total_rating, num_ratings) in products.items():
+            average_rating = total_rating / num_ratings
+            data[user][product] = average_rating
+
+    if not data:  # Nếu không có feedback nào thì lấy ngẫu nhiên product
+        return Product.objects.all()[:num_recommendations]
+    
+    # Xây dựng ma trận user-product, Fill NaN với 0 nếu không có đánh giá
+    ratings_df = pd.DataFrame(data).T.fillna(0)
+
+    print("              ")
+
+    # Kiểm tra nếu user chưa có lịch sử đánh giá => Gợi ý các sản phẩm có nhiều lượt rating nhất
+    if user_id not in ratings_df.index:
+        popular_products = (
+            Feedback.objects.values('product')
+            .annotate(total_ratings=models.Count('rating'))
+            .order_by('-total_ratings')
+        )
+        product_ids = [p['product'] for p in popular_products[:num_recommendations]]
+        return Product.objects.filter(product_id__in=product_ids)
+
+    # Tính toán độ tương đồng giữa người dùng, lấy ra người dùng có độ tương đồng cao nhất
+    user_similarity = cosine_similarity(ratings_df)
+    user_similarity_df = pd.DataFrame(user_similarity, index=ratings_df.index, columns=ratings_df.index)
+
+    
+    # Gợi ý sản phẩm dựa trên sự tương đồng mua sắm giữa các user
+    def recommend_for_user(user_id, ratings_df, user_similarity_df):
+        # Sort list user có độ tương đồng giảm dần (ngoại trừ chính user đó)
+        similar_users = user_similarity_df[user_id].sort_values(ascending=False).drop(user_id)
+
+        print(similar_users)   
+        
+        # Tìm sản phẩm user chưa mua
+        user_ratings = ratings_df.loc[user_id] # lấy ra các sản phẩm sort theo rating của user
+        products_bought = user_ratings[user_ratings > 0].index # Lấy ra id sản phẩm đã mua có rating > 0
+        recommendations = {}
+
+        # Tính toán lấy ra các sản phẩm chưa mua và độ tương đồng tương ứng
+        for other_user, similarity in similar_users.items():
+            other_user_ratings = ratings_df.loc[other_user]
+            for product, rating in other_user_ratings.items():
+                if product not in products_bought and rating > 0:
+                    if product not in recommendations:
+                        recommendations[product] = 0
+                    recommendations[product] += similarity * rating
+
+        # Sắp xếp các sản phẩm theo thứ tự độ tương đồng giảm dần
+        sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
+        # Kết quả: danh sách các sản phẩm (chưa được mua), mà các user khác có độ tương đồng cao đã từng mua và có rating cao
+        return [product for product, score in sorted_recommendations[:num_recommendations]]
+
+    recommended_product_ids = recommend_for_user(user_id, ratings_df, user_similarity_df)
+    print("recommended_product_ids: ", recommended_product_ids)
+    recommended_products = Product.objects.filter(product_id__in=recommended_product_ids)
+    return recommended_products
+
+
 def home(request):
     now = timezone.now()
 
@@ -143,13 +259,18 @@ def home(request):
                            .annotate(total_sold_month=Sum('orderitem__quantity'))
                            .order_by('-total_sold_month')
                            )[:10]
+    
+    if request.user.id:
+        recommended_products = recommend_products(request.user.id)
+    else:
+        recommended_products = None
 
-    print(top_selling_products)
     context = {
         'top_selling_products': top_selling_products,
         'top_sale_products': top_sale_products,
         'hot_selling_products': hot_selling_product,
-        'range': range(10)
+        'range': range(10),
+        'recommended_products': recommended_products,
     }
 
     return render(request, 'customer/home.html', context)
@@ -470,6 +591,8 @@ def buy_now(request):
             'coupons': coupons
         }
         return render(request, 'customer/order/checkout.html', context)
+    else:
+       return redirect('home') 
 
 
 def add_address(request):

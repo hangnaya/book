@@ -107,6 +107,69 @@
      </div>
    
     <div class='container homepage'>
+
+        {% if recommended_products %}
+        <div class="products-slider mt-3 p-3">
+            <div class="title-prod d-flex justify-content-between">
+                <h4 class="title-group">
+                    Có thể bạn sẽ thích
+                </h4>
+            </div>
+            <div class="swiper-theme-container">
+                <div class="swiper swiper-4">
+                    <!-- Additional required wrapper -->
+                    <div class="swiper-wrapper d-flex">
+                        <!-- Slides -->
+                        {% for product in recommended_products %}
+                        <div class="swiper-slide">
+                            <a class="product" href="/product/{{product.product_id}}">
+                                <div class="product-card">
+                                    <div class="product-image">
+                                        <img src="{{product.productimage_set.first.name.url}}" alt="" class="product-img">
+                                    </div>
+                                    <div class="product-name" data-toggle="tooltip" title="{{product.name}}">{{product.name}}</div>
+                                    <div class="product-price">
+                                        <div class="product-price-sale color-red">
+                                            {% if product.sale > 0 %}
+                                                {{product.sale|floatformat:0|intcomma_dot}} đ
+                                            {% else %}
+                                                {{product.price|floatformat:0|intcomma_dot}} đ
+                                            {% endif %}
+                                        </div>
+                                        {% if product.sale > 0 %}
+                                            <div class="product-price-original">{{product.price|floatformat:0|intcomma_dot}} đ</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="product-rate d-flex align-items-center">
+                                        {% for i in 5|times %}
+                                        {% if i <= product.rating %}
+                                        <i class="fa-solid fa-star"></i>
+                                        {% else %}
+                                        <i class="fa-regular fa-star"></i>
+                                        {% endif %}
+                                        {% endfor %}
+                                        <div class="product-quantity-sold ms-2">(Đã bán {{product.total_sold}})</div>
+                                    </div>
+                                </div>
+                            </a>
+
+                        </div>
+                        {% endfor %}
+
+                    </div>
+                </div>
+                <div class="swiper-nav">
+                    <div class="swiper-button-prev swiper-button-prev-4">
+                        <i class="swiper-button-icon fa-solid fa-angle-left"></i>
+                    </div>
+                    <div class="swiper-button-next swiper-button-next-4">
+                        <i class="swiper-button-icon fa-solid fa-angle-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="products-slider mt-3 p-3">
             <div class="title-prod d-flex justify-content-between">
                 <h4 class="title-group">
@@ -280,7 +343,7 @@
 
     <script>
         $(document).ready(() => {
-            list_swiper = [1, 2, 3];
+            list_swiper = [1, 2, 3, 4];
             list_swiper.forEach((item) => {
                 var mySwiper = new Swiper(`.swiper-${item}`, {
                     slidesPerView: 1,

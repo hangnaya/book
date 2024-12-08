@@ -465,7 +465,6 @@
         var inputQuantity = $("input[name='quantity']");
 
         $(".btn-plus").click(function() {
-            console.warn("zzz");
             var availableQuantity = parseInt($(".quantity-available").text().match(/\d+/)[0], 10);
             var currentValue = parseInt(inputQuantity.val());
             if (currentValue < availableQuantity) {
@@ -477,8 +476,6 @@
             }
         });
         $(".btn-minus").click(function() {
-            console.warn("xxxx");
-            
             var availableQuantity = parseInt($(".quantity-available").text().match(/\d+/)[0], 10);
             var currentValue = parseInt(inputQuantity.val());
             if (currentValue > 1) {

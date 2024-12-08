@@ -5,7 +5,9 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('login', views.log_in, name='login'),
+    path('login-admin', views.log_in_admin, name='login-admin'),
     path('logout', views.log_out, name='logout'),
+    path('logout-admin', views.log_out_admin, name='logout-admin'),
     path('', views.home, name='home'),
     path('list-product', views.listProduct, name='list-product'),
     path('product/<int:product_id>', views.getProductDetail, name='product-detail'),
@@ -74,7 +76,7 @@ urlpatterns = [
 
     # order
     path('admin_orders', views.orderManager, name='admin_orders'),
-    path('order_detail', views.getOrderDetail, name='order_datail'),
+    path('order_detail', views.getOrderDetail, name='order_detail'),
 
     # customer
     path('customers', views.customerManager, name='customers'),
