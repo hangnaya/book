@@ -5,7 +5,13 @@
 <div class="py-4">
     <div class="container">
         <h4 class="mb-2">Trạng thái đơn hàng
-            <span class="color-blue fw-normal">#{{ order.order_id }}</span>
+            <span class="color-blue fw-normal">#
+                {% if order.order_code %}
+                    {{order.order_code}}
+                {% else %}
+                    {{order.order_id}}
+                {% endif %}
+            </span>
         </h4>
         {% if order.payment_method == 'Paypal' or order.payment_method == 'VNpay' %}
             {% if order.status.name == 'Chờ thanh toán' %}
@@ -123,7 +129,7 @@
                                     </a>
                                 </div>
                                 <div class="col-4">Loại:  
-                                    {% if item.type == '0' %}
+                                    {% if item.type == 0 %}
                                         Sách mới
                                     {% else %}
                                         Sách cũ

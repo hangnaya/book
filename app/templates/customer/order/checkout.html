@@ -12,10 +12,19 @@
                         {{ error }}
                     </div>
                 {% endif %}
+                {% if messages %}
+                    <div>
+                        {% for message in messages %}
+                        {% if message.tags == 'error' %}
+                            <div class="alert alert-danger">{{ message }}</div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
                 <form action="{% url 'order' %}" class='form-order' method='post'>
                     {% csrf_token %}
-                    {% for item in cart_items %}
-                    <input type="hidden" name="cart_item" value="{{item.cart_item_id}}" />
+                    {% for cart_id, item in cart_items.items %}
+                    <input type="hidden" name="cart_item" value="{{cart_id}}" />
                     {% endfor %}
                     <input type="hidden" name="product_id" value="{{product.product_id}}" />
                     <input type="hidden" name="quantity" value="{{quantity}}" />
@@ -362,32 +371,30 @@
                         <h5>Đơn hàng</h5>
                         <div class="list-order-item mt-3">
                             {% if cart_items %}
-                            {% for item in cart_items %}
-                            <div class="order-item row d-flex align-items-center my-2">
-                                <div class="col-6">
-                                    <div class="d-flex align-items-center">
-                                        <img src="{{item.product.productimage_set.first.name.url}}" alt="" style="width: 40px;height: 40px;">
-                                        <div class="order-item-name text-container ms-2">{{item.product.name}}</div>
+                                {% for product_id, item in cart_items.items %}
+                                    <div class="order-item row d-flex align-items-center my-2">
+                                        <div class="col-6">
+                                            <div class="d-flex align-items-center">
+                                                <img src="{{item.image}}" alt="" style="width: 40px;height: 40px;">
+                                                <div class="order-item-name text-container ms-2">{{item.name}}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-2 d-flex justify-content-center quantity">{{item.quantity}}</div>
+                                        <div class="col-4 d-flex flex-row-reverse price-item">{{item.price|floatformat:0}}</div>
                                     </div>
-                                </div>
-                                <div class="col-2 d-flex justify-content-center quantity">x {{item.quantity}}</div>
-                                <div class="col-4 d-flex flex-row-reverse price-item">{{item.price|floatformat:0}}</div>
-                            </div>
-                            {% endfor %}
-
+                                {% endfor %}
                             {% else %}
-                            <div class="order-item row d-flex align-items-center my-2">
-                                <div class="col-6">
-                                    <div class="d-flex align-items-center">
-                                        <img src="{{product.productimage_set.first.name.url}}" alt="" style="width: 40px;height: 40px;">
-                                        <div class="order-item-name text-container ms-2">{{product.name}}</div>
+                                <div class="order-item row d-flex align-items-center my-2">
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{product.productimage_set.first.name.url}}" alt="" style="width: 40px;height: 40px;">
+                                            <div class="order-item-name text-container ms-2">{{product.name}}</div>
+                                        </div>
                                     </div>
+                                    <div class="col-2 d-flex justify-content-center quantity">x {{quantity}}</div>
+                                    <div class="col-4 d-flex flex-row-reverse price-item">{{product.curr_price|floatformat:0}}</div>
                                 </div>
-                                <div class="col-2 d-flex justify-content-center quantity">x {{quantity}}</div>
-                                <div class="col-4 d-flex flex-row-reverse price-item">{{product.curr_price|floatformat:0}}</div>
-                            </div>
                             {% endif %}
-
                         </div>
 
                         <div class="order-infor-money">

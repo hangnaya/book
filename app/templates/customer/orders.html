@@ -77,7 +77,13 @@
                 <tbody>
                     {% for order in orders %}
                     <tr class="order-item">
-                        <td><a href="/order-detail?order_id={{order.order_id}}" class="color-blue">#{{order.order_id}}</a></td>
+                        <td><a href="/order-detail?order_id={{order.order_id}}" class="color-blue">#
+                            {% if order.order_code %}
+                                {{order.order_code}}
+                            {% else %}
+                                {{order.order_id}}
+                            {% endif %}
+                        </a></td>
                         <td class='order-status'>
                             <span class="badge rounded-pill badge-success">
                                 <span class="badge-lable status">{{order.status.name}}</span>

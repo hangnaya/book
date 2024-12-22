@@ -1,4 +1,4 @@
-from .models import Notification, Cart
+from .models import Notification
 from django.shortcuts import redirect
 from django.urls import resolve
 
@@ -11,10 +11,11 @@ class MyMiddleWare:
         
         user = request.user
         if user.is_authenticated:
-            cart = Cart.objects.filter(customer=user).last()
-            num_cart_item = 0
-            if cart:   
-                num_cart_item = cart.cartitem_set.count()
+            # cart = Cart.objects.filter(customer=user).last()
+            cart = request.session.get('cart', {})
+            num_cart_item = len(cart)
+            # if cart:   
+            #     num_cart_item = cart.cartitem_set.count()
             notifications = Notification.objects.filter(customer=user).order_by('-create_at')[:5]
             response.set_cookie('notifications', notifications)
             response.set_cookie('num_cart_item', num_cart_item)

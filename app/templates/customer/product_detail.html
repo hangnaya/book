@@ -549,7 +549,7 @@
                     else {
                         Swal.fire(
                             'Thất bại!',
-                            'Thêm sản phảm vào giỏ hàng thất bại!',
+                            response.message ? response.message : 'Thêm sản phảm vào giỏ hàng thất bại!',
                             'Error'
                         )
                     }

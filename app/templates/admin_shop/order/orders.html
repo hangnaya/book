@@ -51,7 +51,13 @@
                             <tbody>
                                 {% for order in page_obj %}
                                 <tr class="order-item">
-                                    <td><a href="/order_detail?order_id={{ order.order_id }}" class="color-blue">#{{ order.order_id }}</a></td>
+                                    <td><a href="/order_detail?order_id={{ order.order_id }}" class="color-blue">#
+                                        {% if order.order_code %}
+                                            {{order.order_code}}
+                                        {% else %}
+                                            {{order.order_id}}
+                                        {% endif %}
+                                    </a></td>
                                     <td>
                                         <a href="/view_profile?user_id={{ order.customer.id }}" class="d-flex justify-content-center">
                                             <div class="d-flex align-items-center">

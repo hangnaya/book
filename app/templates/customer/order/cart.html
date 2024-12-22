@@ -9,7 +9,7 @@
         <h2>Giỏ hàng</h2> 
         <div class="row">
             <div class="col-8 bg-white pt-3">
-                {% if cart.cartitem_set.all %}                
+                {% if cart_count > 0 %}                
                 <div class="cart-table">
                     <table class="table">
                         <thead>
@@ -25,21 +25,21 @@
                         </thead>
                         <tbody>
 
-                            {% for item in cartitems %}
-                            <tr class="cart-table-row" data-cart-item-id='{{ item.cart_item_id }}'>
+                            {% for cart_id, item in cart.items %}
+                            <tr class="cart-table-row" data-cart-item-id='{{ cart_id }}'>
                                 <!-- viết một hàng dữ liệu sản phẩm trong giỏ hàng -->
                                 <th scope="row">
                                     <input class="cart-table__select-item form-check-input" type="checkbox" value="" id="flexCheckDefault">
                                 </th>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="{{ item.product.productimage_set.first.name.url }}" alt="" class="cart-product-img" style="width: 64px;" />
-                                        <div class="cart-product-name text-container ms-2">{{ item.product.name}}</div>
+                                        <img src="{{ item.image }}" alt="" class="cart-product-img" style="width: 64px;" />
+                                        <div class="cart-product-name text-container ms-2">{{ item.name}}</div>
                                     </div>
                                 </td>
                                 <td>
                                     <div class="cart-product-size">
-                                        {% if item.type == 0 %}
+                                        {% if item.type == '0' %}
                                             Sách mới
                                         {% else %}
                                             Sách cũ

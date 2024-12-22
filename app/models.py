@@ -141,6 +141,7 @@ class Order(models.Model):
     receiver = models.CharField(max_length=100, blank=False, null=False)
     phone = models.CharField(max_length=20, blank=False, null=False)
     address = models.CharField(max_length=255, blank=False, null=False)
+    order_code = models.CharField(max_length=8, default='')
 
 
 class OrderItem(models.Model):
@@ -160,17 +161,17 @@ class Tracking(models.Model):
     order_status = models.ForeignKey(OrderStatus, on_delete=models.CASCADE, blank=False, null=False)
 
 
-class Cart(models.Model):
-    cart_id = models.AutoField(primary_key=True, blank=False, null=False)
-    customer = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False)
+# class Cart(models.Model):
+#     cart_id = models.AutoField(primary_key=True, blank=False, null=False)
+#     customer = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False)
 
 
-class CartItem(models.Model):
-    cart_item_id = models.AutoField(primary_key=True, blank=False, null=False)
-    type = models.IntegerField(default=0, blank=False, null=False)
-    quantity = models.IntegerField(default=1, blank=False, null=False)
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, blank=False, null=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=False, null=False)
+# class CartItem(models.Model):
+#     cart_item_id = models.AutoField(primary_key=True, blank=False, null=False)
+#     type = models.IntegerField(default=0, blank=False, null=False)
+#     quantity = models.IntegerField(default=1, blank=False, null=False)
+#     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, blank=False, null=False)
+#     product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=False, null=False)
 
 
 class Coupon(models.Model):
@@ -214,6 +215,7 @@ class Post(models.Model):
     views = models.IntegerField(default=0)
     time_created = models.DateTimeField(default=timezone.datetime.now(), blank=False, null=False)
     image = models.ImageField(upload_to='post_images/', blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False, default=1)
 
     def __str__(self):
         return self.name

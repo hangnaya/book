@@ -3,7 +3,13 @@
 {% block content %}
     <div class="content">
         <div class="order-detail">
-            <h4 class="my-3">Đơn hàng #{{ order.order_id }}</h4>
+            <h4 class="my-3">Đơn hàng #
+                {% if order.order_code %}
+                    {{order.order_code}}
+                {% else %}
+                    {{order.order_id}}
+                {% endif %}
+            </h4>
             <div class="">
                 Người đặt hàng:
                 <a href="/view_profile?user_id={{ order.customer.id }}">

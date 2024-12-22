@@ -102,7 +102,7 @@ class AddressShippingForm(forms.ModelForm):
 class OrderForm(forms.ModelForm):
     class Meta:
         model = Order
-        exclude = ['date', 'customer', 'status']
+        exclude = ['date', 'customer', 'status', 'order_code']
 
 
 class OrderStatusForm(forms.ModelForm):

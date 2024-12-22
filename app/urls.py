@@ -68,7 +68,7 @@ urlpatterns = [
     path('edit_category_post', views.editCategoryPost, name='edit_category_post'),
     path('delete_category_post', views.deleteCategoryPost, name='delete_category_post'),
 
-    # category_post
+    # post
     path('posts', views.postManager, name='posts'),
     path('add_post', views.addPost, name='add_post'),
     path('edit_post', views.editPost, name='edit_post'),
